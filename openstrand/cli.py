@@ -85,7 +85,30 @@ def cmd_make(args):
         else:
             data, warnings, source = generators.sample(args.name)
             name = f'{args.name}.json'
+    if args.design == 'sample' and _write_steps(args, source):
+        return
     _write_design(args, data, warnings, source, name)
+
+
+def _write_steps(args, source):
+    """make sample --out-dir for a tutorial of the craft library drawn step by step:
+    each step its own project. True when it wrote them."""
+    from . import generators, library
+    entry = None if source in generators.samples() else library.find(source)
+    steps = library.steps_of(entry) if entry else []
+    if not steps:
+        if getattr(args, 'out_dir', None):
+            raise ValueError(f'"{args.name}" is one design, not steps: use --out')
+        return False
+    if not args.out_dir:
+        print(f'{entry["title"]} has {len(steps)} steps; this is the last. --out-dir DIR writes each one.')
+        return False
+    folder = Path(args.out_dir)
+    for number, (caption, data) in enumerate(steps, start=1):
+        out = project.write(data, folder / f'step_{number}.json')
+        print(f'wrote {out} · {project.summary(data)}')
+        print(f'  step {number}: {caption}')
+    return True
 
 
 def cmd_draw(args):
@@ -533,6 +556,7 @@ def build_parser():
     x.add_argument('--stretch', action='store_true', help='the stretched variant, ribbons packed closer')
     s = designs.add_parser('sample', help='a ready-made design by name (see: openstrand samples)')
     s.add_argument('name')
+    s.add_argument('--out-dir', help='for a tutorial drawn step by step: write each step there (step_1.json, ...)')
     for d in (t, h, x, s):
         d.add_argument('--out', help='project file to write (default: a name from the design)')
         d.add_argument('--verbose', action='store_true', help=argparse.SUPPRESS)

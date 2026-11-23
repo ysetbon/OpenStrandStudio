@@ -1,0 +1,234 @@
+{
+ "name": "constrictor_knot",
+ "craft": "knots",
+ "title": "Constrictor knot",
+ "also": [
+  "constrictor",
+  "constrictor hitch",
+  "ABOK #1249"
+ ],
+ "about": "A binding knot that grips a rod, a bundle or the neck of a bag so hard it often has to be cut off: a clove hitch whose end is also tucked under the standing part, so the two ends cross in an overhand knot beneath the riding turn. Shown loose, from the front.",
+ "kind": "hitch",
+ "width": 24,
+ "cords": [
+  {
+   "label": "Rod",
+   "color": "gold",
+   "smooth": false,
+   "points": [
+    [
+     150,
+     400
+    ],
+    [
+     1050,
+     400
+    ]
+   ]
+  },
+  {
+   "label": "Rope",
+   "color": "teal",
+   "points": [
+    [
+     600,
+     900
+    ],
+    [
+     600,
+     775
+    ],
+    [
+     600,
+     600
+    ],
+    [
+     600,
+     400
+    ],
+    [
+     600,
+     320
+    ],
+    [
+     618,
+     262
+    ],
+    [
+     700,
+     235
+    ],
+    [
+     782,
+     262
+    ],
+    [
+     800,
+     320
+    ],
+    [
+     800,
+     400
+    ],
+    [
+     800,
+     520
+    ],
+    [
+     785,
+     583
+    ],
+    [
+     740,
+     600
+    ],
+    [
+     600,
+     600
+    ],
+    [
+     480,
+     600
+    ],
+    [
+     370,
+     598
+    ],
+    [
+     345,
+     583
+    ],
+    [
+     340,
+     520
+    ],
+    [
+     340,
+     400
+    ],
+    [
+     340,
+     320
+    ],
+    [
+     355,
+     262
+    ],
+    [
+     410,
+     235
+    ],
+    [
+     465,
+     262
+    ],
+    [
+     480,
+     320
+    ],
+    [
+     480,
+     400
+    ],
+    [
+     480,
+     600
+    ],
+    [
+     482,
+     700
+    ],
+    [
+     500,
+     755
+    ],
+    [
+     545,
+     778
+    ],
+    [
+     600,
+     778
+    ],
+    [
+     655,
+     772
+    ],
+    [
+     692,
+     742
+    ],
+    [
+     700,
+     690
+    ],
+    [
+     700,
+     600
+    ],
+    [
+     700,
+     400
+    ],
+    [
+     700,
+     235
+    ],
+    [
+     700,
+     80
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "UOUUO",
+  "OUOUUOOOOUUUUOO"
+ ],
+ "steps": [
+  {
+   "shown": [
+    "all",
+    null
+   ],
+   "caption": "The rod, post or bundle the knot binds."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 5
+    }
+   ],
+   "arrow": 1,
+   "caption": "Bring the end up over the rod in front and down behind it: the first turn."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 9
+    }
+   ],
+   "arrow": 1,
+   "caption": "Bring it across the front, over the standing part, and up over the rod again to the left: this is the riding turn."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 12
+    }
+   ],
+   "arrow": 1,
+   "caption": "Take it over the top and down behind the rod and behind the riding turn, then across under the standing part."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "Bring the end up under the riding turn, over the rod and out over the first turn. The two ends now cross in an overhand knot under the riding turn: pull them hard."
+  }
+ ]
+}

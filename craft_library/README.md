@@ -42,6 +42,13 @@ the tool call the match ends with.
 - `build`, one of:
   - `{"file": "craft_library/<craft>/json/<name>.json"}`: a project file in
     this repository.
+  - `{"steps": [{"file": "craft_library/<craft>/steps/<name>/step_1.json",
+    "caption": "..."}, ...]}`: a tutorial drawn step by step, one project per
+    step, each with what to do in it (a full stop at the end). For knots
+    whose pictures are not the cord drawn further and further, such as the
+    crowned knots: drawn by hand in the app, or with `draw-steps`. The agent's
+    `load_sample` gives every step; `make sample <name> --out-dir DIR`
+    writes them.
   - `{"sample": "hopf_link"}`: a published file in `knot_samples/` or
     `mxn_samples/`.
   - `{"mxn": {"m": 2, "n": 1}}` (also `hand`, `stretch`), or
@@ -61,6 +68,28 @@ do at each. A recipe needs no entry in `catalog.json`: it is listed from its
 own file, and `openstrand tie "<its title>"` makes its steps, every one
 checked. `AUTHORING.md` says how to write one and try it with
 `openstrand recipe`.
+
+## The crowned knots
+
+The good luck knot (its steps 3 and 4), the chrysanthemum knot and the
+five-sided good luck knot are tied by crowning: the cord laid in a star of
+bights, each folded over the next, and crowned again on top. `scripts/build_crown_steps.py` writes each one's
+`draw-steps` design (`chinese_knotting/spec/<name>.json`) from the geometry
+of a crown, with over and under at every crossing, and draws its steps into
+`chinese_knotting/steps/<name>/`, with one picture of them all under
+`chinese_knotting/images/`. A knot with `"after": n` continues a tutorial
+drawn by hand: its steps are numbered after the first n, which it leaves as
+they are. Change a knot there and run it again.
+
+The Pan Chang knot is drawn the same way by `scripts/build_pan_chang_steps.py`,
+from Lydia Chen's five pictures: two upright hairpins and four rows over,
+under, over, under; four rows of the other end between them, over all and
+under all in turn; that end woven up (under the first end's 2nd and 4th
+rows, over the rest) and down (over only its 1st and 3rd rows); the ears
+pulled out; the knot shaped. The pipa knot (琵琶结) comes from
+`scripts/build_pipa_knot_steps.py` the same way: the ear, then round after
+round behind the ear's legs and down over everything, each loop inside the
+last, the end out at the back.
 
 ## Adding a design
 

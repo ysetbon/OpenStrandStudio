@@ -1,0 +1,188 @@
+{
+ "name": "marlinespike_hitch",
+ "craft": "knots",
+ "title": "Marlinespike hitch",
+ "also": [
+  "marlingspike hitch",
+  "marline spike hitch",
+  "ABOK #2030"
+ ],
+ "about": "Holds a spike, a rod or a handle in a line so the line can be hauled tight with it, as in serving and seizing: a loop of the line laid over the line itself, and the spike passed over, under and over through it. Pulling the spike out undoes it at once. Shown loose, from the front.",
+ "kind": "hitch",
+ "width": 24,
+ "cords": [
+  {
+   "label": "Spike",
+   "color": "grey",
+   "smooth": false,
+   "points": [
+    [
+     280,
+     470
+    ],
+    [
+     920,
+     470
+    ]
+   ]
+  },
+  {
+   "label": "Line",
+   "color": "teal",
+   "points": [
+    [
+     600,
+     30
+    ],
+    [
+     600,
+     170
+    ],
+    [
+     600,
+     290
+    ],
+    [
+     615,
+     350
+    ],
+    [
+     680,
+     400
+    ],
+    [
+     745,
+     430
+    ],
+    [
+     762,
+     470
+    ],
+    [
+     755,
+     580
+    ],
+    [
+     700,
+     660
+    ],
+    [
+     600,
+     690
+    ],
+    [
+     500,
+     660
+    ],
+    [
+     450,
+     580
+    ],
+    [
+     440,
+     470
+    ],
+    [
+     442,
+     360
+    ],
+    [
+     458,
+     260
+    ],
+    [
+     505,
+     190
+    ],
+    [
+     600,
+     168
+    ],
+    [
+     690,
+     172
+    ],
+    [
+     732,
+     210
+    ],
+    [
+     710,
+     260
+    ],
+    [
+     600,
+     292
+    ],
+    [
+     540,
+     320
+    ],
+    [
+     530,
+     390
+    ],
+    [
+     548,
+     470
+    ],
+    [
+     575,
+     580
+    ],
+    [
+     600,
+     690
+    ],
+    [
+     600,
+     790
+    ],
+    [
+     600,
+     890
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "OUO",
+  "UOUOUOUOU"
+ ],
+ "steps": [
+  {
+   "shown": [
+    null,
+    "all"
+   ],
+   "caption": "Twist a loop into the line, closing it over the line above, and lay the loop down over the line, so the line runs down behind it."
+  },
+  {
+   "shown": [
+    {
+     "after": 1
+    },
+    "all"
+   ],
+   "arrow": 0,
+   "caption": "Push the spike in over the near side of the loop."
+  },
+  {
+   "shown": [
+    {
+     "after": 2
+    },
+    "all"
+   ],
+   "arrow": 0,
+   "caption": "Take it under the line where the line runs down through the loop."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "Bring it out over the far side of the loop. Haul on the line: the loop closes round the spike and holds it."
+  }
+ ]
+}

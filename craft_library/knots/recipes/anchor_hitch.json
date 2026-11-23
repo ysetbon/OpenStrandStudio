@@ -1,0 +1,282 @@
+{
+ "name": "anchor_hitch",
+ "craft": "knots",
+ "title": "Anchor hitch",
+ "also": [
+  "fisherman's bend",
+  "anchor bend",
+  "ABOK #1723"
+ ],
+ "about": "Ties a rope to a ring, an anchor or a post so that it holds when wet and jerked: a round turn, the end passed back under both turns, then a half hitch round the standing part. Shown loose, from the front.",
+ "kind": "hitch",
+ "width": 24,
+ "cords": [
+  {
+   "label": "Rod",
+   "color": "gold",
+   "smooth": false,
+   "points": [
+    [
+     200,
+     400
+    ],
+    [
+     1060,
+     400
+    ]
+   ]
+  },
+  {
+   "label": "Rope",
+   "color": "teal",
+   "points": [
+    [
+     600,
+     940
+    ],
+    [
+     600,
+     800
+    ],
+    [
+     600,
+     690
+    ],
+    [
+     600,
+     585
+    ],
+    [
+     600,
+     485
+    ],
+    [
+     600,
+     400
+    ],
+    [
+     605,
+     330
+    ],
+    [
+     625,
+     282
+    ],
+    [
+     660,
+     265
+    ],
+    [
+     695,
+     282
+    ],
+    [
+     715,
+     330
+    ],
+    [
+     720,
+     400
+    ],
+    [
+     722,
+     500
+    ],
+    [
+     735,
+     545
+    ],
+    [
+     760,
+     560
+    ],
+    [
+     785,
+     545
+    ],
+    [
+     798,
+     500
+    ],
+    [
+     800,
+     400
+    ],
+    [
+     805,
+     330
+    ],
+    [
+     825,
+     282
+    ],
+    [
+     860,
+     265
+    ],
+    [
+     895,
+     282
+    ],
+    [
+     915,
+     330
+    ],
+    [
+     920,
+     400
+    ],
+    [
+     912,
+     455
+    ],
+    [
+     885,
+     482
+    ],
+    [
+     840,
+     486
+    ],
+    [
+     800,
+     485
+    ],
+    [
+     720,
+     485
+    ],
+    [
+     600,
+     485
+    ],
+    [
+     480,
+     485
+    ],
+    [
+     430,
+     495
+    ],
+    [
+     405,
+     530
+    ],
+    [
+     402,
+     600
+    ],
+    [
+     415,
+     660
+    ],
+    [
+     450,
+     688
+    ],
+    [
+     520,
+     692
+    ],
+    [
+     600,
+     692
+    ],
+    [
+     680,
+     690
+    ],
+    [
+     720,
+     672
+    ],
+    [
+     732,
+     638
+    ],
+    [
+     720,
+     602
+    ],
+    [
+     680,
+     585
+    ],
+    [
+     600,
+     583
+    ],
+    [
+     550,
+     588
+    ],
+    [
+     524,
+     615
+    ],
+    [
+     520,
+     692
+    ],
+    [
+     520,
+     760
+    ],
+    [
+     520,
+     840
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "UOUO",
+  "UOOOUUOOUUOUOOUU"
+ ],
+ "steps": [
+  {
+   "shown": [
+    "all",
+    null
+   ],
+   "caption": "The ring, rail or post the rope is tied to."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 5
+    }
+   ],
+   "arrow": 1,
+   "caption": "Bring the end up over the rod in front and down behind it: one turn."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 9
+    }
+   ],
+   "arrow": 1,
+   "caption": "And round once more beside the first turn: over the rod and down behind it. That is the round turn."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 12
+    }
+   ],
+   "arrow": 1,
+   "caption": "Bring the end back to the left under both turns: under the second turn, over the part of the first that comes down behind the rod, and under the standing part."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "Make a half hitch round the standing part: over it, back under it, and tuck the end down under its own part, between it and the standing part. Pull it snug."
+  }
+ ]
+}

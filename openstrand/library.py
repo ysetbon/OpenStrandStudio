@@ -24,7 +24,7 @@ from . import ROOT
 FOLDER = ROOT / 'craft_library'
 CATALOG = FOLDER / 'catalog.json'
 PICTURES = FOLDER / 'pictures'  # one small picture per entry (scripts/build_library_pictures.py)
-BUILDS = ('file', 'sample', 'mxn', 'turks_head', 'tie', 'make')
+BUILDS = ('file', 'steps', 'sample', 'mxn', 'turks_head', 'tie', 'make')
 
 # Words in a request that say nothing about which design is meant.
 _ASIDE = {'a', 'an', 'the', 'of', 'in', 'for', 'with', 'and', 'how', 'to', 'tie', 'make', 'do', 'i', 'me', 'show',
@@ -132,6 +132,9 @@ def how(entry, cli=False):
     kind, value = next(iter(build.items()))
     if kind in ('file', 'sample'):
         return f'make sample {entry["name"]}' if cli else f'load_sample name="{entry["name"]}"'
+    if kind == 'steps':
+        return (f'make sample {entry["name"]} --out-dir DIR' if cli
+                else f'load_sample name="{entry["name"]}" (with its {len(value)} steps)')
     if kind == 'mxn':
         extra = ''.join(f' --{k} {v}' if cli else f', {k}="{v}"' for k, v in value.items() if k == 'hand')
         stretch = (' --stretch' if cli else ', stretch=true') if value.get('stretch') else ''
@@ -166,19 +169,34 @@ def picture_of(entry):
     return path if path.is_file() else None
 
 
-def path_of(entry):
-    """The project file of an entry built from a file, inside the repository."""
-    path = (ROOT / entry['build']['file']).resolve()
+def _inside(entry, file):
+    path = (ROOT / file).resolve()
     if ROOT.resolve() not in path.parents:
         raise LibraryError(f'{entry["name"]}: its file is outside the repository')
     return path
+
+
+def path_of(entry):
+    """The project file of an entry built from a file (for a tutorial drawn step by step,
+    its last step), inside the repository."""
+    if 'steps' in entry['build']:
+        return _inside(entry, entry['build']['steps'][-1]['file'])
+    return _inside(entry, entry['build']['file'])
+
+
+def steps_of(entry):
+    """[(caption, project)] of a tutorial drawn step by step in the app, in order; [] for
+    any other entry."""
+    from . import project
+    return [(step['caption'], project.read(_inside(entry, step['file'])))
+            for step in entry['build'].get('steps', ())]
 
 
 def build(entry):
     """(project, warnings, source) for an entry a file or a generator makes."""
     from . import generators, project
     kind, value = next(iter(entry['build'].items()))
-    if kind == 'file':
+    if kind in ('file', 'steps'):  # a tutorial drawn step by step: its last step
         return project.read(path_of(entry)), [], entry['name']
     if kind == 'sample':
         return generators.sample(value)

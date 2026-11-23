@@ -1,0 +1,363 @@
+{
+ "name": "highwaymans_hitch",
+ "craft": "knots",
+ "title": "Highwayman's hitch",
+ "also": [
+  "highwaymans hitch",
+  "highwayman hitch",
+  "draw hitch",
+  "getaway hitch"
+ ],
+ "about": "A quick-release hitch made of three bights: one passed behind the rail, a bight of the standing part through it from the front, and a bight of the working end through that. It holds a pull on the standing part, and a tug on the working end draws the bights out one after another and frees it; for light loads only. Shown loose, from the front.",
+ "kind": "hitch",
+ "width": 24,
+ "cords": [
+  {
+   "label": "Rail",
+   "color": "gold",
+   "smooth": false,
+   "points": [
+    [
+     150,
+     440
+    ],
+    [
+     1050,
+     440
+    ]
+   ]
+  },
+  {
+   "label": "Rope",
+   "color": "teal",
+   "points": [
+    [
+     260,
+     760
+    ],
+    [
+     260,
+     640
+    ],
+    [
+     260,
+     440
+    ],
+    [
+     260,
+     400
+    ],
+    [
+     264.1,
+     368.9
+    ],
+    [
+     276.1,
+     340.0
+    ],
+    [
+     295.1,
+     315.1
+    ],
+    [
+     320.0,
+     296.1
+    ],
+    [
+     348.9,
+     284.1
+    ],
+    [
+     380.0,
+     280.0
+    ],
+    [
+     440,
+     280
+    ],
+    [
+     600,
+     280
+    ],
+    [
+     760,
+     280
+    ],
+    [
+     775.3,
+     283.0
+    ],
+    [
+     788.3,
+     291.7
+    ],
+    [
+     797.0,
+     304.7
+    ],
+    [
+     800.0,
+     320.0
+    ],
+    [
+     797.0,
+     335.3
+    ],
+    [
+     788.3,
+     348.3
+    ],
+    [
+     775.3,
+     357.0
+    ],
+    [
+     760.0,
+     360.0
+    ],
+    [
+     600,
+     360
+    ],
+    [
+     440,
+     360
+    ],
+    [
+     380,
+     360
+    ],
+    [
+     364.7,
+     363.0
+    ],
+    [
+     351.7,
+     371.7
+    ],
+    [
+     343.0,
+     384.7
+    ],
+    [
+     340.0,
+     400.0
+    ],
+    [
+     340,
+     440,
+     "front"
+    ],
+    [
+     340,
+     500
+    ],
+    [
+     346.7,
+     525.0
+    ],
+    [
+     365.0,
+     543.3
+    ],
+    [
+     390.0,
+     550.0
+    ],
+    [
+     415.0,
+     543.3
+    ],
+    [
+     433.3,
+     525.0
+    ],
+    [
+     440.0,
+     500.0
+    ],
+    [
+     440,
+     440
+    ],
+    [
+     440,
+     320,
+     "behind"
+    ],
+    [
+     440,
+     200
+    ],
+    [
+     443.0,
+     184.7
+    ],
+    [
+     451.7,
+     171.7
+    ],
+    [
+     464.7,
+     163.0
+    ],
+    [
+     480.0,
+     160.0
+    ],
+    [
+     495.3,
+     163.0
+    ],
+    [
+     508.3,
+     171.7
+    ],
+    [
+     517.0,
+     184.7
+    ],
+    [
+     520.0,
+     200.0
+    ],
+    [
+     520,
+     320
+    ],
+    [
+     520,
+     440
+    ],
+    [
+     520,
+     500
+    ],
+    [
+     525.4,
+     520.0
+    ],
+    [
+     540.0,
+     534.6
+    ],
+    [
+     560.0,
+     540.0
+    ],
+    [
+     580.0,
+     534.6
+    ],
+    [
+     594.6,
+     520.0
+    ],
+    [
+     600.0,
+     500.0
+    ],
+    [
+     600,
+     440
+    ],
+    [
+     600,
+     320
+    ],
+    [
+     600,
+     200
+    ],
+    [
+     603.0,
+     184.7
+    ],
+    [
+     611.7,
+     171.7
+    ],
+    [
+     624.7,
+     163.0
+    ],
+    [
+     640.0,
+     160.0
+    ],
+    [
+     655.3,
+     163.0
+    ],
+    [
+     668.3,
+     171.7
+    ],
+    [
+     677.0,
+     184.7
+    ],
+    [
+     680.0,
+     200.0
+    ],
+    [
+     680,
+     320
+    ],
+    [
+     680,
+     440
+    ],
+    [
+     680,
+     640
+    ],
+    [
+     680,
+     760
+    ]
+   ]
+  }
+ ],
+ "patterns": [
+  "UUOOUU",
+  "OOUOOUUUOOUUUOOUOOUUOO"
+ ],
+ "steps": [
+  {
+   "shown": [
+    "all",
+    null
+   ],
+   "caption": "The rail, post or ring the rope is hitched to."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 9
+    }
+   ],
+   "arrow": 1,
+   "caption": "Follow the rope from the standing part on the left: up in front of the rail and out to the right in a bight lying across, then back to the left. This is the bight of the standing part."
+  },
+  {
+   "shown": [
+    "all",
+    {
+     "after": 16
+    }
+   ],
+   "arrow": 1,
+   "caption": "Down in front of the rail, then up behind it in a second bight: under both legs of the first going up, over them coming down, and down behind the rail again."
+  },
+  {
+   "shown": [
+    "all",
+    "all"
+   ],
+   "caption": "Bring the working end up in front of the rail in a third bight through the first: over its lower leg, under its upper leg, and back down. Pull the standing part to set it; a tug on the working end lets it go."
+  }
+ ]
+}

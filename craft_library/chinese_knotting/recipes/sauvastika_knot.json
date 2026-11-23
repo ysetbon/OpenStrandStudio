@@ -1,0 +1,35 @@
+{
+  "name": "sauvastika_knot",
+  "craft": "chinese knotting",
+  "title": "Sauvastika knot",
+  "also": ["sauvastika", "Buddha knot", "wan zi jie", "ten thousand character knot", "agemaki knot", "dragonfly knot", "sailor's cross"],
+  "about": "One cord folded in the middle and tied as two interlocking overhand knots: pulled tight, a small square body with an ear at the top from the fold, an ear on each side and the two ends hanging below. Shown loose and flat, the two halves of the cord in two colors.",
+  "kind": "decorative",
+  "width": 22,
+  "cords": [
+    {"label": "Left half", "color": "gold", "points": [
+      [599.0, 92.0], [564.0, 97.0], [534.0, 121.0], [518.0, 167.0], [515.0, 235.0], [514.0, 302.0],
+      [515.0, 370.0], [512.0, 455.0], [495.0, 540.0], [478.0, 610.0], [486.0, 680.0], [524.0, 716.0],
+      [570.0, 703.0], [600.0, 650.0], [652.0, 595.0], [705.0, 540.0], [780.0, 553.0], [870.0, 563.0],
+      [958.0, 561.0], [1016.0, 537.0], [1038.0, 497.0], [1017.0, 457.0], [952.0, 438.0], [860.0, 430.0],
+      [770.0, 410.0], [685.0, 370.0], [600.0, 302.0], [515.0, 235.0], [476.0, 208.0], [444.0, 200.0],
+      [420.0, 220.0], [412.0, 262.0], [412.0, 335.0], [430.0, 410.0], [512.0, 455.0], [548.0, 518.0],
+      [548.0, 595.0], [503.0, 697.0], [490.0, 780.0], [488.0, 850.0]]},
+    {"label": "Right half", "color": "crimson", "points": [
+      [601.0, 92.0], [636.0, 97.0], [666.0, 121.0], [682.0, 167.0], [685.0, 235.0], [686.0, 302.0],
+      [685.0, 370.0], [688.0, 455.0], [705.0, 540.0], [722.0, 610.0], [714.0, 680.0], [676.0, 716.0],
+      [630.0, 703.0], [600.0, 650.0], [548.0, 595.0], [495.0, 540.0], [420.0, 553.0], [330.0, 563.0],
+      [242.0, 561.0], [184.0, 537.0], [162.0, 497.0], [183.0, 457.0], [248.0, 438.0], [340.0, 430.0],
+      [430.0, 410.0], [515.0, 370.0], [600.0, 302.0], [685.0, 235.0], [724.0, 208.0], [756.0, 200.0],
+      [780.0, 220.0], [788.0, 262.0], [788.0, 335.0], [770.0, 410.0], [688.0, 455.0], [652.0, 518.0],
+      [652.0, 595.0], [697.0, 697.0], [710.0, 780.0], [712.0, 850.0]]}
+  ],
+  "patterns": ["UOOOUUUOUOOOUUUO", "OUUUOOOUOUUUOOOU"],
+  "steps": [
+    {"shown": [{"after": 8}, {"after": 8}], "caption": "Fold the cord in the middle and tie a loose overhand knot with the two halves below the fold, which stays up as the top ear: the left half crosses over, under and over the right half."},
+    {"shown": [{"after": 12}, {"after": 8}], "arrow": 0, "caption": "Take the left half out to the right as an ear and back across the front of the top loop, over both of its legs."},
+    {"shown": [{"after": 12}, {"after": 12}], "arrow": 1, "caption": "Take the right half out to the left as an ear and back across the back of the top loop: under both of its legs and under the left half."},
+    {"shown": [{"after": 12}, "all"], "arrow": 1, "caption": "Fold the right end over to the front and down through the knot: over the left half by the right ear, over its own leg, over the left half again and under its own lower curve."},
+    {"shown": ["all", "all"], "caption": "Fold the left end round to the back and down through the knot: under the right half, under its own leg, under the right half again and over its own lower curve. Pull the three ears and the ends to close the body into a small square."}
+  ]
+}

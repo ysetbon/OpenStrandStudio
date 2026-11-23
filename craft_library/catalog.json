@@ -41,12 +41,137 @@
       "build": {"file": "src/samples/chinese_cloverleaf.json"}
     },
     {
+      "name": "good_luck_knot_crowned",
+      "craft": "chinese knotting",
+      "title": "Good luck knot, tied by crowning",
+      "also": ["crowned good luck knot", "good luck knot by crowning", "crown method good luck knot", "ji xiang jie", "jixiang knot", "auspicious knot"],
+      "about": "The good luck knot as it is taught: the cord folded into a cross of three loops and two ends, then crowned, each arm folded over the next one anticlockwise and the last tucked through the bend of the first. Shown step by step, with arrows: the cross and the first crown drawn by hand, then the crown pulled snug and the second crown, clockwise, on top.",
+      "build": {"steps": [
+        {"file": "craft_library/chinese_knotting/steps/good_luck_knot_crowned/step_1.json",
+         "caption": "Fold the cord into a cross: a loop at the top, one to the left, one to the right, and the two ends hanging down. The arrows show where each arm folds next, anticlockwise."},
+        {"file": "craft_library/chinese_knotting/steps/good_luck_knot_crowned/step_2.json",
+         "caption": "Fold the top loop down over the left loop, the left loop over it to the right, and the ends up over the left loop. Fold the right loop over the ends to the left and tuck it through the bend of the top loop, then pull all four arms out to tighten."},
+        {"file": "craft_library/chinese_knotting/steps/good_luck_knot_crowned/step_3.json",
+         "caption": "Pull the crown snug, leaving the four arms long. Now crown again on top, this time clockwise, as the arrows show."},
+        {"file": "craft_library/chinese_knotting/steps/good_luck_knot_crowned/step_4.json",
+         "caption": "The second crown lies on top of the first, turned the other way: each arm folds over the next and the last is tucked through the bend of the first. Pull the arms out to tighten, then ease out the three large ears and the four small ones between them."}
+      ]}
+    },
+    {
+      "name": "chrysanthemum_knot",
+      "craft": "chinese knotting",
+      "title": "Chrysanthemum knot",
+      "also": ["kiku musubi", "kiku knot", "Japanese good luck knot"],
+      "about": "The good luck knot with both crowns turned the same way, as Japanese books tie it: the cord laid in a cross of three bights and the two ends, crowned anticlockwise, pulled snug and crowned anticlockwise again on top. It comes out a little less crisp than the good luck knot and hangs slightly differently. Drawn step by step, with arrows.",
+      "build": {"steps": [
+        {"file": "craft_library/chinese_knotting/steps/chrysanthemum_knot/step_1.json",
+         "caption": "Lay the cord in a cross: a bight up, one to the left, one to the right, and the two ends down. The arrows show the crown: each arm folds anticlockwise over the next."},
+        {"file": "craft_library/chinese_knotting/steps/chrysanthemum_knot/step_2.json",
+         "caption": "Crown: fold each arm anticlockwise over the base of the next, on top of the fold before it, and tuck the last one through the bend of the first. Then pull the four arms out."},
+        {"file": "craft_library/chinese_knotting/steps/chrysanthemum_knot/step_3.json",
+         "caption": "Pull the crown snug, leaving the arms long. Now crown again on top, anticlockwise as before."},
+        {"file": "craft_library/chinese_knotting/steps/chrysanthemum_knot/step_4.json",
+         "caption": "The second crown lies on top of the first: each arm folds over the next and the last is tucked through the bend of the first. Pull the arms out to tighten and ease the ears until they match."}
+      ]}
+    },
+    {
+      "name": "five_sided_good_luck_knot",
+      "craft": "chinese knotting",
+      "title": "Five-sided good luck knot",
+      "also": ["pentagonal good luck knot", "5 good luck knot", "five-sided good luck", "five-pointed good luck knot"],
+      "about": "A good luck knot of five sides: four bights and the two ends laid in a star, crowned anticlockwise, pulled snug and crowned clockwise on top, as the square good luck knot is tied. One of the knot's many variations with more sides. Drawn step by step, with arrows.",
+      "build": {"steps": [
+        {"file": "craft_library/chinese_knotting/steps/five_sided_good_luck_knot/step_1.json",
+         "caption": "Lay the cord in a star of five arms: four bights and the two ends hanging down. The arrows show the crown: each arm folds anticlockwise over the next."},
+        {"file": "craft_library/chinese_knotting/steps/five_sided_good_luck_knot/step_2.json",
+         "caption": "Crown anticlockwise: fold each arm over the base of the next, on top of the fold before it, and tuck the last one through the bend of the first. Then pull the five arms out."},
+        {"file": "craft_library/chinese_knotting/steps/five_sided_good_luck_knot/step_3.json",
+         "caption": "Pull the crown snug, leaving the arms long. Now crown again on top, this time clockwise."},
+        {"file": "craft_library/chinese_knotting/steps/five_sided_good_luck_knot/step_4.json",
+         "caption": "The second crown lies on top of the first, turned the other way: each arm over the next and the last tucked through the bend of the first. Pull the arms out to tighten and ease the ears even."}
+      ]}
+    },
+    {
       "name": "magic_knot",
       "craft": "knitting",
       "title": "Magic knot",
       "also": ["joining two yarns", "yarn join", "joining a new ball"],
       "about": "Joins a new ball of yarn to the old one: each yarn ties an overhand knot round the other. It is the fisherman's knot.",
       "build": {"tie": "fisherman's knot"}
+    },
+    {
+      "name": "crochet_chain_stitch",
+      "craft": "crochet",
+      "title": "Chain stitch",
+      "also": ["ch", "crochet chain", "foundation chain", "chain stitch crochet"],
+      "about": "The first stitch of crochet: from a slip knot on the hook, the yarn is taken over the hook and pulled through the loop again and again, and each pull-through adds one loop to a chain that the next rows are worked into.",
+      "build": {"steps": [
+        {"file": "craft_library/crochet/steps/crochet_chain_stitch/step_1.json",
+         "caption": "Start with a slip knot on the hook: the front leg of its loop lies over the hook and the back leg under it, and the working yarn leads away behind the front leg."},
+        {"file": "craft_library/crochet/steps/crochet_chain_stitch/step_2.json",
+         "caption": "Yarn over: take the working yarn under the hook, then over the top and back across the front of the hook, between the loop and the tip."},
+        {"file": "craft_library/crochet/steps/crochet_chain_stitch/step_3.json",
+         "caption": "Catch the yarn in the hook and pull it through the loop: the old loop comes off the hook as one chain, and both legs of the new loop pass over its edge next to the hook and through it."},
+        {"file": "craft_library/crochet/steps/crochet_chain_stitch/step_4.json",
+         "caption": "Repeat the yarn over and the pull-through: each one adds a chain beside the last. The loop on the hook and the slip knot are not counted."}
+      ]}
+    },
+    {
+      "name": "knit_stitch",
+      "craft": "knitting",
+      "title": "Knit stitch",
+      "also": ["knit", "plain stitch", "plain knitting"],
+      "about": "The basic stitch of knitting: the right needle goes into the front of the first stitch on the left needle from left to right, the yarn is wrapped round it and pulled through to the front, and the old stitch slips off. Shown English style, the working yarn held at the back.",
+      "build": {"steps": [
+        {"file": "craft_library/knitting/steps/knit_stitch/step_1.json",
+         "caption": "With the working yarn at the back, put the right needle into the front of the first stitch on the left needle, from left to right: it goes under the front leg of the stitch and over its back leg, and behind the left needle, so the tips cross with the right needle at the back."},
+        {"file": "craft_library/knitting/steps/knit_stitch/step_2.json",
+         "caption": "Wrap the working yarn round the right needle between the two tips: from the back, under the right needle, then over it."},
+        {"file": "craft_library/knitting/steps/knit_stitch/step_3.json",
+         "caption": "Draw the wrap back through the stitch with the right needle: the new loop comes up through the old stitch and out over its front leg, and sits on the right needle in front of the work."},
+        {"file": "craft_library/knitting/steps/knit_stitch/step_4.json",
+         "caption": "Slip the old stitch off the tip of the left needle: it now hangs round the legs of the new stitch, which stays on the right needle. One knit stitch is made."}
+      ]}
+    },
+    {
+      "name": "pan_chang_knot",
+      "craft": "chinese knotting",
+      "title": "Pan Chang knot",
+      "also": ["mystic knot", "endless knot", "pan chang", "Chinese pan chang knot", "panchang knot", "two-loop pan chang", "er hui pan chang jie"],
+      "about": "The Pan Chang knot as Lydia Chen ties it, the two-loop pan chang: a cord pinned in upright hairpins, rows laid across them from one end and then the other, and the second end woven up and down through them all, so that every band of the square body is doubled and the bands weave over and under each other. Shown step by step on the pins, then finished, hung by a corner with seven ears.",
+      "build": {"steps": [
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_1.json",
+         "caption": "Pin the cord in two upright hairpins: down, round the bottom, up, over the top, down, round and up. Bring it round at the top right and lay four rows across, back and forth, each going over, under, over, under across the four uprights."},
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_2.json",
+         "caption": "Take the other end and lay four rows between those, back and forth: the first over all four uprights, the next under all four, and so on in turn."},
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_3.json",
+         "caption": "Weave the same end up and down twice through all the rows: going up, under the second and fourth rows of the first end and over all the others; coming down, over only the first and third rows of the first end."},
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_4.json",
+         "caption": "Take out the pins and pull the ears outward a little at a time, so the woven body closes up evenly."},
+        {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_5.json",
+         "caption": "Shape the knot: hang it by a corner, three large ears at the top and sides, four small ones between them, the two ends below."}
+      ]}
+    },
+    {
+      "name": "pipa_knot",
+      "craft": "chinese knotting",
+      "title": "Pipa knot",
+      "also": ["pipa", "pi pa jie", "lute knot", "Chinese lute knot", "pipa button knot"],
+      "about": "The pipa knot (琵琶结), named for the pear-shaped Chinese lute and used for frog buttons: a small ear at the top, then the end taken again and again round the neck below the ear, behind its legs and down over everything, each time making a loop just inside the last. Shown loose, step by step; pulled close it makes the lute shape.",
+      "build": {"steps": [
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_1.json",
+         "caption": "Make a small ear at the top: take the cord up, round the ear and down, and lay one big pear-shaped loop round the standing part, over it at the bottom. The end comes back up on the right."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_2.json",
+         "caption": "Bring the end across the neck in front to the left, behind the ear's two legs to the right, back down over the neck, and down the middle inside the first loop."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_3.json",
+         "caption": "Go round the bottom, over the standing part, and up the right side inside the first loop, back to the neck."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_4.json",
+         "caption": "Cross the neck in front again, go behind the ear's legs, come back down over the neck and everything below, and down the middle inside the last loop: each new turn lies over the ones before."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_5.json",
+         "caption": "Go round the bottom over the standing part and up the right side inside the last loop, back to the neck."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_6.json",
+         "caption": "Cross the neck, go behind the ear's legs a last time, come down over the neck and through the middle, and out at the back under the loops. Ease the loops close round each other, then melt and glue the end at the back."}
+      ]}
     }
   ]
 }

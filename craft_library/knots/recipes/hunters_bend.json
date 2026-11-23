@@ -1,0 +1,138 @@
+{
+  "name": "hunters_bend",
+  "craft": "knots",
+  "title": "Hunter's bend",
+  "also": [
+    "Riggers' bend",
+    "rigger's bend",
+    "riggers bend",
+    "Hunters bend",
+    "ABOK #1425A"
+  ],
+  "about": "Joins two ropes: a loop in each, one the mirror image of the other, the loops overlapped and linked, and both ends passed down through the middle of the two, one from the front and one from behind. Each cord is an overhand knot, both of the same hand. Shown loose.",
+  "kind": "bend",
+  "width": 22,
+  "cords": [
+    {
+      "label": "First cord",
+      "color": "teal",
+      "points": [
+        [150, 352],
+        [240, 338],
+        [310, 320],
+        [365, 297],
+        [420, 258],
+        [490, 236],
+        [555, 247],
+        [600, 271],
+        [648, 318],
+        [676, 420],
+        [652, 520],
+        [600, 569],
+        [530, 603],
+        [440, 603],
+        [352, 548],
+        [307, 445],
+        [310, 370],
+        [338, 312],
+        [360, 245],
+        [395, 185],
+        [450, 160],
+        [490, 190],
+        [500, 250],
+        [520, 310],
+        [548, 352],
+        [566, 410],
+        [562, 465],
+        [545, 515],
+        [515, 560],
+        [492, 612],
+        [482, 680],
+        [476, 760]
+      ]
+    },
+    {
+      "label": "Second cord",
+      "color": "gold",
+      "points": [
+        [1050, 352],
+        [960, 338],
+        [890, 320],
+        [835, 297],
+        [780, 258],
+        [710, 236],
+        [645, 247],
+        [600, 271],
+        [552, 318],
+        [524, 420],
+        [548, 520],
+        [600, 569],
+        [670, 603],
+        [760, 603],
+        [848, 548],
+        [893, 445],
+        [890, 370],
+        [862, 312],
+        [840, 245],
+        [805, 185],
+        [750, 160],
+        [710, 190],
+        [700, 250],
+        [680, 310],
+        [652, 352],
+        [634, 410],
+        [638, 465],
+        [655, 515],
+        [685, 560],
+        [708, 612],
+        [718, 680],
+        [724, 760]
+      ]
+    }
+  ],
+  "patterns": [
+    "OUOOUUOUOOUU",
+    "UOUUOOUOUUOO"
+  ],
+  "steps": [
+    {
+      "shown": [
+        {
+          "after": 8
+        },
+        null
+      ],
+      "arrow": 0,
+      "caption": "Make a loop in the end of the first cord: across to the right, round clockwise, and up under its own standing part."
+    },
+    {
+      "shown": [
+        {
+          "after": 8
+        },
+        {
+          "after": 8
+        }
+      ],
+      "arrow": 1,
+      "caption": "Make the mirror-image loop in the second cord, its end over its own standing part, overlapping the first: under the first loop at the top and over it at the bottom."
+    },
+    {
+      "shown": [
+        "all",
+        {
+          "after": 8
+        }
+      ],
+      "arrow": 0,
+      "caption": "Bring the first cord's end round to the right and down through the middle of both loops: over both upper sides, then under both lower sides."
+    },
+    {
+      "shown": [
+        "all",
+        "all"
+      ],
+      "caption": "Bring the second cord's end round to the left and down through the middle: under both upper sides, then over both lower sides. Pull the standing parts apart to tighten."
+    }
+  ]
+}

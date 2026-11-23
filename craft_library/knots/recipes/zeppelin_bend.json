@@ -1,0 +1,132 @@
+{
+  "name": "zeppelin_bend",
+  "craft": "knots",
+  "title": "Zeppelin bend",
+  "also": [
+    "Rosendahl bend",
+    "Zeppelin knot",
+    "Rosendahl knot"
+  ],
+  "about": "Joins two ropes: a loop in each, one laid on the other so their holes overlap, and each end passed round and through the middle, the two in opposite directions. Each cord is an overhand knot, the two of opposite hand. Shown loose.",
+  "kind": "bend",
+  "width": 22,
+  "cords": [
+    {
+      "label": "First cord",
+      "color": "teal",
+      "points": [
+        [400, 60],
+        [430, 140],
+        [462, 215],
+        [470, 260],
+        [462, 310],
+        [468, 390],
+        [505, 448],
+        [600, 484],
+        [697, 448],
+        [748, 350],
+        [722, 245],
+        [640, 184],
+        [545, 198],
+        [480, 238],
+        [405, 255],
+        [335, 310],
+        [300, 430],
+        [318, 570],
+        [375, 670],
+        [470, 718],
+        [545, 680],
+        [555, 600],
+        [555, 520],
+        [555, 450],
+        [555, 400],
+        [555, 345],
+        [555, 270],
+        [555, 180],
+        [555, 120],
+        [555, 50]
+      ]
+    },
+    {
+      "label": "Second cord",
+      "color": "gold",
+      "points": [
+        [800, 740],
+        [770, 660],
+        [738, 585],
+        [730, 540],
+        [738, 490],
+        [732, 410],
+        [695, 352],
+        [600, 316],
+        [503, 352],
+        [452, 450],
+        [478, 555],
+        [560, 616],
+        [655, 602],
+        [720, 562],
+        [795, 545],
+        [865, 490],
+        [900, 370],
+        [882, 230],
+        [825, 130],
+        [730, 82],
+        [655, 120],
+        [645, 200],
+        [645, 280],
+        [645, 350],
+        [645, 400],
+        [645, 455],
+        [645, 530],
+        [645, 620],
+        [645, 680],
+        [645, 750]
+      ]
+    }
+  ],
+  "patterns": [
+    "UOOOOUUOUUOO",
+    "OUUUUOOUOOUU"
+  ],
+  "steps": [
+    {
+      "shown": [
+        {
+          "after": 8
+        },
+        null
+      ],
+      "arrow": 0,
+      "caption": "Make a loop like a 6 in the end of the first cord: from the top, down and round, the end crossing over its own standing part."
+    },
+    {
+      "shown": [
+        {
+          "after": 8
+        },
+        {
+          "after": 8
+        }
+      ],
+      "arrow": 1,
+      "caption": "Make a loop like a 9 in the second cord, the end crossing under its own standing part, and lay it under the first loop so the holes overlap."
+    },
+    {
+      "shown": [
+        "all",
+        {
+          "after": 8
+        }
+      ],
+      "arrow": 0,
+      "caption": "Take the first cord's end down round the outside, under both lower sides of the loops and up through the middle, then over both upper sides."
+    },
+    {
+      "shown": [
+        "all",
+        "all"
+      ],
+      "caption": "Take the second cord's end up round the outside, over both upper sides and down through the middle, then under both lower sides. Pull the standing parts apart to tighten."
+    }
+  ]
+}

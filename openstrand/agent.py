@@ -115,7 +115,7 @@ Knots (how one is tied, or one shown tied):
 - For the knot in a design the person already has (in the app: read_tab it
   first), call tie_knot with from_design: it keeps that knot's over and under.
 - A loop knot or a knot that joins two cords (a bend) that is not in
-  knot_library (a zeppelin bend, a water knot): research it, then draw it
+  knot_library (an Albright knot, a vice versa bend): research it, then draw it
   with draw_design, loose enough to follow, one cord per rope, each in its
   own color and labeled. Such knots seldom alternate, so say which cord is on
   top: give a cord a "pattern", a letter for each crossing it passes in order

@@ -75,20 +75,28 @@ that one. Search before you draw anything.
   knot; Josephine knot (Carrick bend); two-strand twist and three- to
   seven-strand braids.
 - **Chinese knotting**, with steps: double coin knot, Pan Chang (mystic or
-  endless knot), good luck knot, cloverleaf knot, cross knot. (The sample
+  endless knot) and the 2x2 mystic knot, good luck knot (also tied by
+  crowning, step by step), chrysanthemum knot, five-sided good luck knot,
+  cloverleaf knot (the site's square cloverleaf) and hexagonal cloverleaf
+  (round brocade), cross knot, double connection knot, sauvastika knot,
+  stellar knot, snake knot, phoenix tail knot. (The sample
   `chinese_cloverleaf` is the cloverleaf finished, as a closed cord.)
-- **Knitting**: the magic knot that joins two yarns, with tying steps.
-- **Crochet**: the slip knot every piece starts from, with steps. No
-  stitches yet: say so, then draw them.
+- **Knitting**: the magic knot that joins two yarns, with tying steps, and
+  the knit stitch, step by step.
+- **Crochet**: the slip knot every piece starts from, and the chain stitch,
+  step by step. Other stitches: say so, then draw them.
 - **Knots**: every knot `tie` makes, by all its names, and with steps:
   two half hitches, round turn and two half hitches, buntline hitch, timber
   hitch, rolling hitch; surgeon's knot, water knot (ring bend), figure-eight
   bend (Flemish bend), overhand bend; overhand loop, double overhand loop
   (surgeon's loop), figure-eight loop, running bowline, double bowline,
-  bowline on a bight, noose; sheepshank.
-- Not in the library (say so, then draw with a pattern and check): zeppelin
-  bend, double sheet bend, anchor hitch, constrictor knot, alpine butterfly,
-  snake knot, button knot, sauvastika knot, plafond knot.
+  bowline on a bight, noose; sheepshank; clove-hitch relatives: constrictor
+  knot, anchor hitch (fisherman's bend), marlinespike hitch, taut-line hitch,
+  highwayman's hitch, Prusik and Klemheist knots; double sheet bend, thief
+  knot, blood knot, Zeppelin, Hunter's and Ashley bends; Ashley stopper knot;
+  improved clinch, uni and trilene knots (fishing knots, tied to a hook eye).
+- Not in the library (say so, then draw with a pattern and check): Albright
+  knot, Palomar knot, button knot, plafond knot, ocean plait mat.
 
 ## Knots by name (`tie`)
 

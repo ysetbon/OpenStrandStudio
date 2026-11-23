@@ -94,9 +94,11 @@ that one. Search before you draw anything.
   knot, anchor hitch (fisherman's bend), marlinespike hitch, taut-line hitch,
   highwayman's hitch, Prusik and Klemheist knots; double sheet bend, thief
   knot, blood knot, Zeppelin, Hunter's and Ashley bends; Ashley stopper knot;
-  improved clinch, uni and trilene knots (fishing knots, tied to a hook eye).
+  improved clinch, uni and trilene knots (fishing knots, tied to a hook eye);
+  alpine butterfly loop, Portuguese bowline.
 - Not in the library (say so, then draw with a pattern and check): Albright
-  knot, Palomar knot, button knot, plafond knot, ocean plait mat.
+  knot, Palomar knot, angler's loop, farmer's loop, button knot, plafond
+  knot, ocean plait mat.
 
 ## Knots by name (`tie`)
 

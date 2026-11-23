@@ -86,7 +86,10 @@ from Lydia Chen's five pictures: two upright hairpins and four rows over,
 under, over, under; four rows of the other end between them, over all and
 under all in turn; that end woven up (under the first end's 2nd and 4th
 rows, over the rest) and down (over only its 1st and 3rd rows); the ears
-pulled out; the knot shaped.
+pulled out; the knot shaped. The pipa knot (琵琶结) comes from
+`scripts/build_pipa_knot_steps.py` the same way: the ear, then round after
+round behind the ear's legs and down over everything, each loop inside the
+last, the end out at the back.
 
 ## Adding a design
 

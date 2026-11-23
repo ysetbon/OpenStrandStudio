@@ -151,6 +151,27 @@
         {"file": "craft_library/chinese_knotting/steps/pan_chang_knot/step_5.json",
          "caption": "Shape the knot: hang it by a corner, three large ears at the top and sides, four small ones between them, the two ends below."}
       ]}
+    },
+    {
+      "name": "pipa_knot",
+      "craft": "chinese knotting",
+      "title": "Pipa knot",
+      "also": ["pipa", "pi pa jie", "lute knot", "Chinese lute knot", "pipa button knot"],
+      "about": "The pipa knot (琵琶结), named for the pear-shaped Chinese lute and used for frog buttons: a small ear at the top, then the end taken again and again round the neck below the ear, behind its legs and down over everything, each time making a loop just inside the last. Shown loose, step by step; pulled close it makes the lute shape.",
+      "build": {"steps": [
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_1.json",
+         "caption": "Make a small ear at the top: take the cord up, round the ear and down, and lay one big pear-shaped loop round the standing part, over it at the bottom. The end comes back up on the right."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_2.json",
+         "caption": "Bring the end across the neck in front to the left, behind the ear's two legs to the right, back down over the neck, and down the middle inside the first loop."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_3.json",
+         "caption": "Go round the bottom, over the standing part, and up the right side inside the first loop, back to the neck."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_4.json",
+         "caption": "Cross the neck in front again, go behind the ear's legs, come back down over the neck and everything below, and down the middle inside the last loop: each new turn lies over the ones before."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_5.json",
+         "caption": "Go round the bottom over the standing part and up the right side inside the last loop, back to the neck."},
+        {"file": "craft_library/chinese_knotting/steps/pipa_knot/step_6.json",
+         "caption": "Cross the neck, go behind the ear's legs a last time, come down over the neck and through the middle, and out at the back under the loops. Ease the loops close round each other, then melt and glue the end at the back."}
+      ]}
     }
   ]
 }

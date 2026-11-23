@@ -80,7 +80,7 @@ that one. Search before you draw anything.
   crowning, step by step), chrysanthemum knot, five-sided good luck knot,
   cloverleaf knot (the site's square cloverleaf) and hexagonal cloverleaf
   (round brocade), cross knot, double connection knot, sauvastika knot,
-  stellar knot, snake knot, phoenix tail knot. (The sample
+  stellar knot, snake knot, phoenix tail knot, pipa knot (琵琶结, step by step). (The sample
   `chinese_cloverleaf` is the cloverleaf finished, as a closed cord.)
 - **Knitting**: the magic knot that joins two yarns, with tying steps, and
   the knit stitch, step by step.

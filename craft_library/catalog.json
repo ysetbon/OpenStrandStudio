@@ -98,6 +98,40 @@
       "also": ["joining two yarns", "yarn join", "joining a new ball"],
       "about": "Joins a new ball of yarn to the old one: each yarn ties an overhand knot round the other. It is the fisherman's knot.",
       "build": {"tie": "fisherman's knot"}
+    },
+    {
+      "name": "crochet_chain_stitch",
+      "craft": "crochet",
+      "title": "Chain stitch",
+      "also": ["ch", "crochet chain", "foundation chain", "chain stitch crochet"],
+      "about": "The first stitch of crochet: from a slip knot on the hook, the yarn is taken over the hook and pulled through the loop again and again, and each pull-through adds one loop to a chain that the next rows are worked into.",
+      "build": {"steps": [
+        {"file": "craft_library/crochet/steps/crochet_chain_stitch/step_1.json",
+         "caption": "Start with a slip knot on the hook: the front leg of its loop lies over the hook and the back leg under it, and the working yarn leads away behind the front leg."},
+        {"file": "craft_library/crochet/steps/crochet_chain_stitch/step_2.json",
+         "caption": "Yarn over: take the working yarn under the hook, then over the top and back across the front of the hook, between the loop and the tip."},
+        {"file": "craft_library/crochet/steps/crochet_chain_stitch/step_3.json",
+         "caption": "Catch the yarn in the hook and pull it through the loop: the old loop comes off the hook as one chain, and both legs of the new loop pass over its edge next to the hook and through it."},
+        {"file": "craft_library/crochet/steps/crochet_chain_stitch/step_4.json",
+         "caption": "Repeat the yarn over and the pull-through: each one adds a chain beside the last. The loop on the hook and the slip knot are not counted."}
+      ]}
+    },
+    {
+      "name": "knit_stitch",
+      "craft": "knitting",
+      "title": "Knit stitch",
+      "also": ["knit", "plain stitch", "plain knitting"],
+      "about": "The basic stitch of knitting: the right needle goes into the front of the first stitch on the left needle from left to right, the yarn is wrapped round it and pulled through to the front, and the old stitch slips off. Shown English style, the working yarn held at the back.",
+      "build": {"steps": [
+        {"file": "craft_library/knitting/steps/knit_stitch/step_1.json",
+         "caption": "With the working yarn at the back, put the right needle into the front of the first stitch on the left needle, from left to right: it goes under the front leg of the stitch and over its back leg, and behind the left needle, so the tips cross with the right needle at the back."},
+        {"file": "craft_library/knitting/steps/knit_stitch/step_2.json",
+         "caption": "Wrap the working yarn round the right needle between the two tips: from the back, under the right needle, then over it."},
+        {"file": "craft_library/knitting/steps/knit_stitch/step_3.json",
+         "caption": "Draw the wrap back through the stitch with the right needle: the new loop comes up through the old stitch and out over its front leg, and sits on the right needle in front of the work."},
+        {"file": "craft_library/knitting/steps/knit_stitch/step_4.json",
+         "caption": "Slip the old stitch off the tip of the left needle: it now hangs round the legs of the new stitch, which stays on the right needle. One knit stitch is made."}
+      ]}
     }
   ]
 }

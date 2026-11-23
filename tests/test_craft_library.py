@@ -212,7 +212,7 @@ def test_search_by_craft_lists_that_craft():
         "good_luck_knot_crowned", "chrysanthemum_knot", "five_sided_good_luck_knot", "double_connection_knot",
         "stellar_knot", "sauvastika_knot", "mystic_knot_2x2", "six_cloverleaf_knot", "snake_knot",
         "phoenix_tail_knot"}
-    assert [e["name"] for e in library.search("crochet")] == ["slip_knot"]
+    assert {e["name"] for e in library.search("crochet")} == {"slip_knot", "crochet_chain_stitch"}
     assert library.search("knitting swatch") == [] and library.search("4x3 bracelet") == []
 
 

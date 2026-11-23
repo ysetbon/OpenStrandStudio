@@ -1,0 +1,409 @@
+{
+  "name": "double_connection_knot",
+  "craft": "chinese knotting",
+  "title": "Double connection knot",
+  "also": [
+    "double connection",
+    "connection knot",
+    "shuang lian jie",
+    "shuang lian knot",
+    "dorae maedeup",
+    "dorae knot",
+    "two strand Matthew Walker knot",
+    "so ren musubi"
+  ],
+  "about": "Two cords hanging side by side, each laid in a loop whose end goes round both cords, through the other loop and then through its own: two overhand knots locked into each other, sitting on both cords. Often tied as a spacer or in a row; shown loose and flat.",
+  "kind": "decorative",
+  "width": 22,
+  "cords": [
+    {
+      "label": "Left cord",
+      "color": "ink",
+      "points": [
+        [
+          535.0,
+          40.0
+        ],
+        [
+          535.0,
+          120.0
+        ],
+        [
+          535.0,
+          200.0
+        ],
+        [
+          535.0,
+          280.0
+        ],
+        [
+          533.0,
+          360.0
+        ],
+        [
+          528.0,
+          440.0
+        ],
+        [
+          520.0,
+          520.0
+        ],
+        [
+          506.0,
+          600.0
+        ],
+        [
+          478.0,
+          668.0
+        ],
+        [
+          430.0,
+          720.0
+        ],
+        [
+          365.0,
+          742.0
+        ],
+        [
+          300.0,
+          730.0
+        ],
+        [
+          248.0,
+          690.0
+        ],
+        [
+          222.0,
+          628.0
+        ],
+        [
+          214.0,
+          560.0
+        ],
+        [
+          220.0,
+          495.0
+        ],
+        [
+          238.0,
+          440.0
+        ],
+        [
+          268.0,
+          400.0,
+          "corner"
+        ],
+        [
+          330.0,
+          370.0
+        ],
+        [
+          420.0,
+          342.0
+        ],
+        [
+          535.0,
+          312.0
+        ],
+        [
+          600.0,
+          272.0
+        ],
+        [
+          665.0,
+          232.0
+        ],
+        [
+          740.0,
+          200.0
+        ],
+        [
+          812.0,
+          196.0
+        ],
+        [
+          858.0,
+          225.0
+        ],
+        [
+          872.0,
+          285.0
+        ],
+        [
+          872.0,
+          360.0
+        ],
+        [
+          866.0,
+          425.0
+        ],
+        [
+          840.0,
+          470.0
+        ],
+        [
+          770.0,
+          492.0
+        ],
+        [
+          680.0,
+          510.0
+        ],
+        [
+          600.0,
+          552.0
+        ],
+        [
+          530.0,
+          585.0
+        ],
+        [
+          470.0,
+          614.0
+        ],
+        [
+          418.0,
+          652.0
+        ],
+        [
+          380.0,
+          700.0
+        ],
+        [
+          362.0,
+          742.0
+        ],
+        [
+          350.0,
+          800.0
+        ],
+        [
+          344.0,
+          860.0
+        ]
+      ]
+    },
+    {
+      "label": "Right cord",
+      "color": "gold",
+      "points": [
+        [
+          665.0,
+          40.0
+        ],
+        [
+          665.0,
+          120.0
+        ],
+        [
+          665.0,
+          200.0
+        ],
+        [
+          665.0,
+          280.0
+        ],
+        [
+          667.0,
+          360.0
+        ],
+        [
+          672.0,
+          440.0
+        ],
+        [
+          680.0,
+          520.0
+        ],
+        [
+          694.0,
+          600.0
+        ],
+        [
+          722.0,
+          668.0
+        ],
+        [
+          770.0,
+          720.0
+        ],
+        [
+          835.0,
+          742.0
+        ],
+        [
+          900.0,
+          730.0
+        ],
+        [
+          952.0,
+          690.0
+        ],
+        [
+          978.0,
+          628.0
+        ],
+        [
+          986.0,
+          560.0
+        ],
+        [
+          980.0,
+          495.0
+        ],
+        [
+          962.0,
+          440.0
+        ],
+        [
+          932.0,
+          400.0,
+          "corner"
+        ],
+        [
+          870.0,
+          370.0
+        ],
+        [
+          780.0,
+          342.0
+        ],
+        [
+          665.0,
+          312.0
+        ],
+        [
+          600.0,
+          272.0
+        ],
+        [
+          535.0,
+          232.0
+        ],
+        [
+          460.0,
+          200.0
+        ],
+        [
+          388.0,
+          196.0
+        ],
+        [
+          342.0,
+          225.0
+        ],
+        [
+          328.0,
+          285.0
+        ],
+        [
+          328.0,
+          360.0
+        ],
+        [
+          334.0,
+          425.0
+        ],
+        [
+          360.0,
+          470.0
+        ],
+        [
+          430.0,
+          492.0
+        ],
+        [
+          520.0,
+          510.0
+        ],
+        [
+          600.0,
+          552.0
+        ],
+        [
+          670.0,
+          585.0
+        ],
+        [
+          730.0,
+          614.0
+        ],
+        [
+          782.0,
+          652.0
+        ],
+        [
+          820.0,
+          700.0
+        ],
+        [
+          838.0,
+          742.0
+        ],
+        [
+          850.0,
+          800.0
+        ],
+        [
+          856.0,
+          860.0
+        ]
+      ]
+    }
+  ],
+  "patterns": [
+    "UOOUOUUUUUOOOU",
+    "OUUOUOOOOOUUUO"
+  ],
+  "steps": [
+    {
+      "shown": [
+        "corner",
+        "corner"
+      ],
+      "caption": "Hang the two cords side by side. Bend each one down into a loop and bring its end back up on the outside, the left loop to the left and the right loop to the right."
+    },
+    {
+      "shown": [
+        {
+          "after": 9
+        },
+        {
+          "after": 9
+        }
+      ],
+      "caption": "Cross the ends over the middle, one behind and one in front: the left end goes behind both cords to the right, the right end in front of both to the left."
+    },
+    {
+      "shown": [
+        {
+          "after": 11
+        },
+        {
+          "after": 9
+        }
+      ],
+      "arrow": 0,
+      "caption": "Tuck the left end through the right loop from behind: down under the right end and out over the right cord."
+    },
+    {
+      "shown": [
+        {
+          "after": 11
+        },
+        {
+          "after": 11
+        }
+      ],
+      "arrow": 1,
+      "caption": "Tuck the right end through the left loop from the front: down over the left end and out under the left cord."
+    },
+    {
+      "shown": [
+        "all",
+        "all"
+      ],
+      "caption": "Spiralling the same way, take each end through its own loop: the left end over the right end and its own cord and out under its loop, the right end under the left end and its own cord and out over its loop. Wiggle the ends as you pull tight."
+    }
+  ]
+}

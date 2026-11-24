@@ -547,10 +547,19 @@ class Scene:
             hidden = set(cord['hidden_ends']) | ({0, 1} if cord['closed'] else set())
             for side in hidden:
                 end = chain[-1 if side else 0]
-                if (side == 0) != end.reversed:
+                index = 0 if (side == 0) != end.reversed else 1
+                if index == 0:
                     end.start_line_visible = False
                 else:
                     end.end_line_visible = False
+                if cord['closed']:
+                    # Mark the flat join as a closed connection. Its circle
+                    # stroke is transparent, so nothing extra is drawn, but
+                    # masks on both sides of the join then overlap instead
+                    # of leaving a hairline where they meet.
+                    closed = list(getattr(end, 'closed_connections', None) or [False, False])
+                    closed[index] = True
+                    end.closed_connections = closed
             for strand, (i, _, _) in zip(chain, spans):
                 if cord['second_color'] and i >= split:
                     strand.color = QColor(cord['second_color'])

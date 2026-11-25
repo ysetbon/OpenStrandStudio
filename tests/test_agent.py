@@ -1058,6 +1058,69 @@ def test_the_panel_attaches_several_images_up_to_the_models_number(window, monke
     assert args[args.index("--image"):args.index("--image") + 4] == ["--image", "a.png", "--image", "b.jpg"]
 
 
+def test_a_picture_pasted_in_the_chat_box_is_attached(window, monkeypatch, tmp_path):
+    """A browser's "Copy image" pasted in the box is saved as a PNG and attached, as the
+    Image button would; copied picture files are attached as they are; text pastes as text.
+    A picture the agent downloaded from a link in the request shows under the request."""
+    import agent_settings
+    from PyQt5.QtCore import QMimeData, QUrl
+    from PyQt5.QtGui import QColor, QImage
+    monkeypatch.setenv("APPDATA", str(tmp_path))
+    agent_settings.save(api_key="sk-ant-test-1234567890", model="claude-haiku-5-5")
+    panel = window.agent_panel
+    panel.set_open(True)
+    panel.new_session()
+    panel.refresh_controls()
+    box = panel.prompt_edit
+    box.clear()
+
+    copied = QMimeData()  # what a browser puts on the clipboard: the picture and its address
+    image = QImage(30, 20, QImage.Format_RGB32)
+    image.fill(QColor("royalblue"))
+    copied.setImageData(image)
+    copied.setText("https://media.example.com/prusik.jpg")
+    assert box.canInsertFromMimeData(copied)
+    box.insertFromMimeData(copied)
+    assert box.text() == "" and len(panel.image_paths) == 1
+    saved = panel.image_paths[0]
+    assert os.path.basename(os.path.dirname(saved)) == "agent_pasted" and saved.endswith(".png")
+    assert QImage(saved).size() == image.size() and panel.attach_button.text() == "Image 1/6"
+    box.insertFromMimeData(copied)  # the same picture again: a second file, not the first one twice
+    assert len(set(panel.image_paths)) == 2
+
+    files = QMimeData()  # picture files copied in the file manager
+    files.setUrls([QUrl.fromLocalFile(picture(tmp_path / f"f{n}.png")) for n in range(6)])
+    box.insertFromMimeData(files)
+    assert len(panel.image_paths) == 6  # the first that fit
+    assert "Claude Haiku 5.5 takes up to 6 reference images with one request." in panel.transcript.toPlainText()
+
+    words = QMimeData()
+    words.setText("in teal")
+    box.insertFromMimeData(words)
+    assert box.text() == "in teal" and len(panel.image_paths) == 6
+    mixed = QMimeData()  # a picture file with something else: pastes as text
+    mixed.setUrls([QUrl.fromLocalFile(picture(tmp_path / "g.png")), QUrl.fromLocalFile(str(tmp_path / "notes.txt"))])
+    box.clear()
+    box.insertFromMimeData(mixed)
+    assert len(panel.image_paths) == 6
+
+    # The agent downloaded a picture from a link: it shows with the request's own pictures.
+    panel.set_images([])
+    panel.add_user("draw this https://media.example.com/prusik.jpg")
+    downloaded = picture(tmp_path / "link_1.jpg")
+    panel.handle_event({"type": "search", "name": "web_fetch", "query": "https://media.example.com/prusik.jpg"})
+    panel.handle_event({"type": "search_result", "name": "web_fetch", "ok": True, "error": None, "results": None,
+                        "image": downloaded,
+                        "pages": [{"title": "picture attached (link_1.jpg)",
+                                   "url": "https://media.example.com/prusik.jpg"}]})
+    user = [e for e in panel.entries if e["kind"] == "user"][-1]
+    assert user["images"] == [downloaded]
+    assert "picture attached (link_1.jpg)" in panel.transcript.toPlainText()
+    panel.working.stop()
+    panel.new_session()
+    box.clear()
+
+
 def test_spending_adds_up_across_requests_until_reset(tmp_path, monkeypatch):
     import datetime
     import agent_settings

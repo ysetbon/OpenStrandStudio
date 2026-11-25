@@ -481,6 +481,20 @@ def design_name(prompt):
     return '_'.join(words).replace('×', 'x')[:48] or 'agent_design'
 
 
+PICTURE_FILES = ('.png', '.jpg', '.jpeg', '.gif', '.webp')  # what the Image button takes
+
+
+def picture_files(mime):
+    """The picture files on the clipboard or in a drop (files copied in the file manager),
+    or [] when anything else is there too: a mix pastes as text."""
+    if not mime.hasUrls():
+        return []
+    paths = [url.toLocalFile() for url in mime.urls()]
+    if not paths or not all(p and p.lower().endswith(PICTURE_FILES) and os.path.isfile(p) for p in paths):
+        return []
+    return paths
+
+
 class PromptBox(QTextEdit):
     """The chat box: Enter sends, Shift+Enter starts a new line, and the box
     grows with what is typed up to MAX_LINES, then scrolls. After an answer
@@ -491,6 +505,10 @@ class PromptBox(QTextEdit):
     and start again. The keys are in Settings > Button Guide, not on the box."""
     submitted = pyqtSignal()
     cycle_mode = pyqtSignal()  # Shift+Tab, as in Claude Code
+    # A picture pasted or dropped in the box: a browser's "Copy image" (a QImage), or
+    # picture files copied in the file manager (their paths). The panel attaches them.
+    image_pasted = pyqtSignal(QImage)
+    files_pasted = pyqtSignal(list)
     MAX_LINES = 8
     DOTS = ('.', '..', '...', '....', '.....')  # the box while the agent works and has no guess yet
     DOTS_MS = 300
@@ -568,6 +586,25 @@ class PromptBox(QTextEdit):
             return False
         self.setText(self.suggestion)  # typed() then drops the suggestion
         return True
+
+    # ------------------------------------------------- pictures pasted in the box
+    def canInsertFromMimeData(self, source):
+        return bool(source.hasImage() or picture_files(source)) or super().canInsertFromMimeData(source)
+
+    def insertFromMimeData(self, source):
+        """Pasted text arrives plain; a pasted picture is attached instead (it has no place
+        in the text). A browser's "Copy image" holds the picture and its address: the picture
+        wins. Copied picture files are attached as they are."""
+        files = picture_files(source)
+        if files:
+            self.files_pasted.emit(files)
+            return
+        if source.hasImage():
+            image = source.imageData()
+            if isinstance(image, QImage) and not image.isNull():
+                self.image_pasted.emit(image)
+                return
+        super().insertFromMimeData(source)
 
     # The QLineEdit calls the rest of the panel and the tests use.
     def text(self):
@@ -1163,6 +1200,8 @@ class AgentPanel(QWidget):
         self.prompt_edit = PromptBox(self)
         self.prompt_edit.submitted.connect(self.send)
         self.prompt_edit.cycle_mode.connect(self.cycle_mode)
+        self.prompt_edit.image_pasted.connect(self.paste_image)
+        self.prompt_edit.files_pasted.connect(self.paste_files)
         self.attach_button = QPushButton(self)
         self.attach_button.setObjectName('agentChip')
         self.attach_button.clicked.connect(self.choose_images)
@@ -1629,19 +1668,55 @@ class AgentPanel(QWidget):
         self.attach_button.setText(_tr(self.language, 'agent_attach') + count)
         self.attach_button.setToolTip(self.images_note(model))
 
-    def choose_images(self):
-        """Attach images, several at once or a few at a time, up to the chosen model's number."""
+    def image_room(self):
+        """How many more images the chosen model takes with the next request; when none,
+        a note says so (or that it sees none)."""
         model = agent_settings.load()['model']
         room = image_limit(model) - len(self.image_paths)
-        if room <= 0:  # full already (or the model sees no pictures): say so, ask for no file
+        if room <= 0:
             self.add_note(self.images_note(model))
+        return room
+
+    def attach_images(self, paths, room):
+        """Attach paths after the ones attached already, no more than room."""
+        paths = [path for path in dict.fromkeys(paths) if path not in self.image_paths]
+        self.set_images(self.image_paths + paths[:room])
+        if len(paths) > room:  # some did not fit: say how many the model takes
+            self.add_note(self.images_note(agent_settings.load()['model']))
+
+    def choose_images(self):
+        """Attach images, several at once or a few at a time, up to the chosen model's number."""
+        room = self.image_room()
+        if room <= 0:  # full already (or the model sees no pictures): ask for no file
             return
         chosen, _ = QFileDialog.getOpenFileNames(self, _tr(self.language, 'agent_attach_title'), '',
                                                  'Images (*.png *.jpg *.jpeg *.gif *.webp)')
-        chosen = [path for path in dict.fromkeys(chosen) if path not in self.image_paths]
-        self.set_images(self.image_paths + chosen[:room])
-        if len(chosen) > room:  # some did not fit: say how many the model takes
-            self.add_note(self.images_note(model))
+        self.attach_images(chosen, room)
+
+    def paste_files(self, paths):
+        """Picture files pasted or dropped in the chat box: attached as the Image button would."""
+        room = self.image_room()
+        if room > 0:
+            self.attach_images(paths, room)
+
+    def paste_image(self, image):
+        """A picture pasted in the chat box (a browser's "Copy image", a screenshot): saved as
+        a PNG in the settings folder's agent_pasted/ and attached."""
+        room = self.image_room()
+        if room <= 0:
+            return
+        folder = os.path.join(agent_settings.settings_directory(), 'agent_pasted')
+        os.makedirs(folder, exist_ok=True)
+        stamp = time.strftime('%Y%m%d-%H%M%S')
+        path = os.path.join(folder, f'pasted-{stamp}.png')
+        number = 2
+        while os.path.exists(path) or path in self.image_paths:
+            path = os.path.join(folder, f'pasted-{stamp}-{number}.png')
+            number += 1
+        if not image.save(path, 'PNG'):
+            logging.warning('agent panel: could not save the pasted picture as %s', path)
+            return
+        self.attach_images([path], room)
 
     # ---------------------------------------------------------- transcript
     # The conversation is a list of entries, drawn as HTML each time it
@@ -2538,6 +2613,15 @@ class AgentPanel(QWidget):
             step = self.last_web_step()
             if step is not None:
                 step['pages'] = [p for p in event.get('pages') or [] if isinstance(p, dict) and p.get('url')]
+            # A picture the agent downloaded from a link in the request: shown under the
+            # request with the attached ones, since the model sees it the same way.
+            image = event.get('image')
+            if isinstance(image, str) and os.path.isfile(image):
+                for entry in reversed(self.entries):
+                    if entry.get('kind') == 'user':
+                        entry.setdefault('images', []).append(image)
+                        break
+            if step is not None or image:
                 self.render_transcript()
         elif kind == 'suggestion':
             # A guess at the next message made while the agent works: greyed in the box

@@ -486,7 +486,10 @@ def cmd_agent(args):
     out_dir.mkdir(parents=True, exist_ok=True)
     from .debuglog import Log
     log = Log(out_dir / 'agent.log', to_stderr=args.log)
-    log(f'agent starts: model {model}, effort {args.effort}, web {not args.no_web}, plan {args.plan}, '
+    # Web search and fetch are Anthropic's server tools: another provider's model has none,
+    # whatever the setting (agent.Agent turns them off the same way).
+    web = not args.no_web and provider.api == 'anthropic'
+    log(f'agent starts: model {model}, effort {args.effort}, web {web}, plan {args.plan}, '
         f'app {args.app}, max ${args.max_cost:.2f}, folder {out_dir.resolve()}')
     log(f'python {sys.version.split()[0]} on {sys.platform}, {sys.executable}')
     if args.app:  # started by OpenStrand Studio: its tabs are tools, answered on stdin

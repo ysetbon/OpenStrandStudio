@@ -22,7 +22,7 @@ from . import ROOT, colors, edit, generators, project
 from .debuglog import short
 from .errors import ToolError  # agent.ToolError: what a tool raises for the agent
 
-from . import providers
+from . import links, providers
 
 # Every model the agent runs on (openstrand/providers.py): Claude, GPT, Grok, Gemini, Kimi, DeepSeek, Qwen.
 MODELS = dict(providers.ALIASES)  # 'sonnet', 'haiku', 'grok', ... -> the model id
@@ -1140,6 +1140,60 @@ class Agent:
                            'ok': error is None, 'error': error, 'results': found,
                            'pages': pages_of(content) if error is None else []})
 
+    def pictures_from_links(self, prompt, images):
+        """Download the pictures the request links to (a browser's "Copy image address"),
+        so the model sees them as reference images: only Claude has web tools, and even they
+        read pages, not pictures. Returns (images with the downloaded ones after the attached
+        ones, words to add to the request saying which picture came from which link).
+
+        Each link shows in the panel as a Reading step. A link that is no picture (a web page)
+        is left to web_fetch when the model has it; otherwise the model and the person are
+        told it could not be read, so the model does not pretend to have seen it."""
+        images = list(images)
+        found = links.find_links(prompt)
+        if not found:
+            return images, ''
+        limit = providers.image_limit(self.model)
+        lines = []
+        for number, url in enumerate(found, 1):
+            if len(images) >= limit:
+                why = (f'{self.label} cannot see pictures' if not limit
+                       else f'{self.label} takes up to {limit} reference images and they are all used')
+                self.log(f'link {url}: not downloaded, {why}')
+                if not self.web:
+                    lines.append(f'- {url}: not opened ({why}), and you cannot open web pages. '
+                                 'Work from my words, and say so if you need the picture.')
+                    self.on_event({'type': 'note', 'text': f'The link was not opened: {why}. '
+                                                           'Use a model that sees pictures, or describe it.'})
+                continue
+            self.on_event({'type': 'search', 'name': 'web_fetch', 'query': url})
+            began = time.monotonic()
+            try:
+                path = links.fetch_picture(url, self.workspace.out_dir, f'link_{number}')
+            except links.LinkError as e:
+                self.log(f'link {url}: no picture ({e}) after {time.monotonic() - began:.1f}s')
+                self.on_event({'type': 'search_result', 'name': 'web_fetch', 'ok': False, 'error': str(e),
+                               'results': None, 'pages': []})
+                if not self.web:
+                    lines.append(f'- {url}: could not be used ({e}). You cannot open web pages: '
+                                 'work from my words, and tell me to attach the picture with the Image '
+                                 'button if you need it.')
+                    self.on_event({'type': 'note', 'text': f'The link gave no picture: {e}. {self.label} '
+                                                           'cannot open web pages; save the picture and '
+                                                           'attach it with the Image button.'})
+                continue
+            images.append(str(path))
+            self.log(f'link {url}: picture downloaded in {time.monotonic() - began:.1f}s, '
+                     f'{path.stat().st_size} bytes, {path.name}')
+            self.on_event({'type': 'search_result', 'name': 'web_fetch', 'ok': True, 'error': None,
+                           'results': None, 'image': str(path),
+                           'pages': [{'title': f'picture attached ({path.name})', 'url': url}]})
+            lines.append(f'- {url}: the app downloaded this picture; it is reference image {len(images)} '
+                         'above. Use it as the picture I mean.')
+        if not lines:
+            return images, ''
+        return images, '\n\nThe links in my message:\n' + '\n'.join(lines)
+
     def run(self, prompt, images=(), start=None, history=None):
         """Build what prompt asks for. Returns the 'done' event.
 
@@ -1149,6 +1203,8 @@ class Agent:
         first), so the person can refer back to it; a new session sends none.
         """
         self.asked = prompt
+        images, said_of_links = self.pictures_from_links(prompt, images)
+        prompt += said_of_links
         if history:
             prompt = with_history(prompt, history)
             last = history[-1] if isinstance(history[-1], dict) else {}

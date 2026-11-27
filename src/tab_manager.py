@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 from save_load_manager import serialize_project_state, apply_project_state
 from project_settings import capture_project_settings, apply_project_settings
+from dialog_lifetime import exec_and_free
 from translations import translations
 
 
@@ -425,7 +426,7 @@ class TabManager(QObject):
             # Mirror the button row for RTL languages (Hebrew).
             if getattr(self.main_window, 'language_code', 'en') == 'he':
                 box.setLayoutDirection(Qt.RightToLeft)
-            box.exec_()
+            exec_and_free(box)
             clicked = box.clickedButton()
             if clicked is save_btn:
                 # Make the tab being saved the live one, then save. If capturing

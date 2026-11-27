@@ -30,6 +30,7 @@ from PyQt5.QtWidgets import (QApplication, QColorDialog, QMenu, QPushButton,
                              QWidgetAction)
 
 import sound_manager
+from dialog_lifetime import exec_and_free
 
 # Same width as NumberedLayerButton, a third less tall (40 -> 27).
 LEVEL_BUTTON_SIZE = QSize(146, 27)
@@ -568,7 +569,7 @@ def show_level_color_menu(panel, level, widget, global_pos):
 def _pick_custom_level_color(panel, level, widget):
     dialog = QColorDialog(panel.level_color(level), widget)
     dialog.setOption(QColorDialog.DontUseNativeDialog)
-    if dialog.exec_():
+    if exec_and_free(dialog):
         color = dialog.currentColor()
         if color.isValid():
             panel.set_level_color(level, color.name())

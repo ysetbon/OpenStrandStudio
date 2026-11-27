@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QListWidget,
                              QSizePolicy, QGridLayout, QSpacerItem, QLayout)
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QFont
+from dialog_lifetime import call_later
 from shrinkable_dialog import allow_shrinking, cap_to_screen, refit_floor, relax
 from translations import translations
 from shadow_editor_dialog import ShadowListItem, get_shadow_help_alignment, get_shadow_help_text
@@ -197,8 +198,9 @@ class GroupShadowEditorDialog(QDialog):
         self.scroll_area.viewport().update()
 
         if ensure_widget_visible is not None:
-            QTimer.singleShot(
-                0,
+            # Tied to the row: dropped if the dialog is closed and freed first
+            call_later(
+                ensure_widget_visible, 0,
                 lambda widget=ensure_widget_visible: self.scroll_area.ensureWidgetVisible(widget, 0, 24)
             )
 
@@ -688,7 +690,23 @@ class GroupShadowEditorDialog(QDialog):
 
     # ── Close ──────────────────────────────────────────────────────────
 
+    def done(self, result):
+        """Every way of closing ends here: the X and Close through the close
+        event, Esc straight from reject(). Esc used to skip the close event,
+        leaving the shadow outlines on the canvas and the edits out of the
+        undo history."""
+        self._finish_editing()
+        super().done(result)
+
     def closeEvent(self, event):
+        self._finish_editing()
+        super().closeEvent(event)
+
+    def _finish_editing(self):
+        """Clear the visualizations and record the undo step, once."""
+        if getattr(self, '_editing_finished', False):
+            return
+        self._editing_finished = True
         if hasattr(self.canvas, 'clear_visible_shadow_paths'):
             self.canvas.clear_visible_shadow_paths()
         if hasattr(self.canvas, 'set_highlighted_shadow'):
@@ -699,5 +717,3 @@ class GroupShadowEditorDialog(QDialog):
             self.canvas.undo_redo_manager._last_save_time = 0
             self.canvas.undo_redo_manager.save_state(
                 action='group.shadow', source='dialog', targets=[self.group_name])
-
-        super().closeEvent(event)

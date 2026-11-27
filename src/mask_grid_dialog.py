@@ -685,8 +685,26 @@ class MaskGridDialog(QDialog):
         """
         self._refresh_table()
 
+    def done(self, result):
+        """Every way of closing ends here: the X and Close through the close
+        event, Esc straight from reject(). Esc used to skip the close event,
+        so a dialog closed that way stayed connected to the canvas and kept
+        rebuilding its grid, hidden, on every mask change."""
+        self._disconnect_signals()
+        super().done(result)
+
     def closeEvent(self, event):
         """Clean up signal connections when dialog is closed."""
+        self._disconnect_signals()
+        # Call parent closeEvent
+        super().closeEvent(event)
+
+    def _disconnect_signals(self):
+        """Stop listening to the canvas and the undo manager. Safe to call
+        more than once."""
+        if getattr(self, '_signals_disconnected', False):
+            return
+        self._signals_disconnected = True
         # Disconnect signals to prevent memory leaks
         if hasattr(self.canvas, 'theme_changed'):
             try:
@@ -714,9 +732,6 @@ class MaskGridDialog(QDialog):
                 self.undo_redo_manager.redo_performed.disconnect(self._on_mask_layer_changed)
             except:
                 pass
-
-        # Call parent closeEvent
-        super().closeEvent(event)
 
     def _apply_theme(self):
         """Apply theme-based styling to the dialog."""

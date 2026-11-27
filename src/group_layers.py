@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QPoint, QEvent, QEventLoop, QT
 from PyQt5.QtGui import QColor, QDragEnterEvent, QDropEvent, QIcon, QIntValidator, QGuiApplication, QPainter, QPen, QPainterPath
 from math import atan2, degrees, isqrt
 from shrinkable_dialog import allow_shrinking
+from dialog_lifetime import exec_and_free, free_on_close
 from translations import translations
 from PyQt5.QtWidgets import QTreeWidget, QTreeWidgetItem
 from PyQt5.QtWidgets import (
@@ -2491,7 +2492,7 @@ class GroupPanel(QWidget):
         cancel_button.clicked.connect(dialog.reject)
         input_field.returnPressed.connect(dialog.accept)
 
-        accepted = (dialog.exec_() == QDialog.Accepted)
+        accepted = (exec_and_free(dialog) == QDialog.Accepted)
         new_group_name = input_field.text() if accepted else ''
 
         if not accepted or not new_group_name:
@@ -2524,7 +2525,7 @@ class GroupPanel(QWidget):
             err_layout.addLayout(err_btn_layout)
             err_ok.clicked.connect(err_dialog.accept)
 
-            err_dialog.exec_()
+            exec_and_free(err_dialog)
             return
         
         # Rename the group in self.groups
@@ -3686,9 +3687,12 @@ class GroupPanel(QWidget):
                     detail='before opening the shadow editor')
 
             from group_shadow_editor_dialog import GroupShadowEditorDialog
-            # Store reference to prevent garbage collection of non-modal dialog
-            self._group_shadow_dialog = GroupShadowEditorDialog(self.canvas, group_name, all_strands, parent=self)
-            self._group_shadow_dialog.show()
+            # Kept only while it is open (the main window closes it on exit);
+            # it is freed, and forgotten here, as soon as it closes.
+            dialog = free_on_close(GroupShadowEditorDialog(self.canvas, group_name, all_strands, parent=self))
+            dialog.finished.connect(lambda *_: self._forget_dialog('_group_shadow_dialog', dialog))
+            self._group_shadow_dialog = dialog
+            dialog.show()
         except RuntimeError:
             pass
 
@@ -3739,11 +3743,22 @@ class GroupPanel(QWidget):
             # Create and show the dialog (non-modal)
             dialog = MaskGridDialog(self.canvas, group_name, parent=self.layer_panel)
             if dialog.strands:  # Only show if there are strands in the group
-                # Store reference to prevent garbage collection
+                # Freed, and forgotten here, as soon as it closes
+                free_on_close(dialog)
+                dialog.finished.connect(lambda *_: self._forget_dialog('_mask_grid_dialog', dialog))
                 self._mask_grid_dialog = dialog
                 dialog.show()
+            else:
+                # Never shown, so nothing would ever close it
+                dialog.deleteLater()
         except RuntimeError:
             pass
+
+    def _forget_dialog(self, attribute, dialog):
+        """Drop the reference to a dialog that has closed, unless a newer one
+        has taken its place."""
+        if getattr(self, attribute, None) is dialog:
+            setattr(self, attribute, None)
 
     def finish_group_rotation_duplicate_remove_me(self, group_name):
         """DUPLICATE METHOD - SHOULD BE REMOVED - Finish the rotation of a group and ensure data is preserved."""

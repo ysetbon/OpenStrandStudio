@@ -94,6 +94,10 @@ class FakeColorDialog:
     def exec_(self):
         return QColorDialog.Accepted
 
+    def deleteLater(self):
+        # The real dialog is freed once it closes (dialog_lifetime.exec_and_free)
+        self.freed = True
+
 
 def color_tuple(color):
     return color.getRgb()

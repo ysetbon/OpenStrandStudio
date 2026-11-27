@@ -14,9 +14,9 @@ from typing import Optional
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from PyQt5.QtWidgets import QMessageBox
 
+from dialog_lifetime import exec_and_free
 from save_load_manager import serialize_project_state, apply_project_state
 from project_settings import capture_project_settings, apply_project_settings
-from dialog_lifetime import exec_and_free
 from translations import translations
 
 

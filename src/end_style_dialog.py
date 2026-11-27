@@ -25,6 +25,7 @@ from mask_grid_dialog import MaskGridDialog
 from checkbox_style import apply_large_indicator
 from segmented_spin_box import upgrade_spinbox, style_segmented_spinbox
 from shrinkable_dialog import fit_to_screen, scroll_area
+from dialog_lifetime import exec_and_free
 from translations import translations
 
 
@@ -620,7 +621,7 @@ class EndStyleDialog(QDialog):
                 parent_button.translate_color_dialog(dialog, _)
             except Exception:
                 pass
-        if dialog.exec_() == QDialog.Accepted:
+        if exec_and_free(dialog) == QDialog.Accepted:
             color = dialog.selectedColor()
             if color.isValid():
                 self._pinned_color = QColor(color)

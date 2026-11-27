@@ -25,6 +25,7 @@ import os
 import sys
 import subprocess
 import sound_manager
+from dialog_lifetime import call_later, exec_and_free
 import json
 from PyQt5.QtCore import QStandardPaths, QDateTime
 # Import StrokeTextButton for displaying icons
@@ -6071,7 +6072,7 @@ class SettingsDialog(QDialog):
                             # Final fallback: use the built-in Qt player dialog
                             try:
                                 dlg = VideoPlayerDialog(video_path, self)
-                                dlg.exec_()
+                                exec_and_free(dlg)
                                 return
                             except Exception:
                                 pass
@@ -6872,9 +6873,10 @@ class SettingsDialog(QDialog):
                     t in ['Alpha channel', 'Alpha channel:', 'Alpha-channel', 'Alpha-channel:']):
                     gb.setTitle(translations_dict.get('alpha_channel', 'Alpha channel'))
         # Schedule multiple passes to be extra safe across styles
-        QTimer.singleShot(0, delayed_alpha_fix)
-        QTimer.singleShot(50, delayed_alpha_fix)
-        QTimer.singleShot(150, delayed_alpha_fix)
+        # Tied to the dialog: one closed within the delay is already freed
+        call_later(dialog, 0, delayed_alpha_fix)
+        call_later(dialog, 50, delayed_alpha_fix)
+        call_later(dialog, 150, delayed_alpha_fix)
 
     def _apply_rtl_to_widgets(self, parent_widget, is_rtl):
         """Recursively apply RTL layout to child widgets."""
@@ -6913,7 +6915,7 @@ class SettingsDialog(QDialog):
         # Translate dialog buttons
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_():
+        if exec_and_free(color_dialog):
             self.shadow_color = color_dialog.currentColor()
             self.update_shadow_color_button()
             
@@ -6949,7 +6951,7 @@ class SettingsDialog(QDialog):
         # Translate dialog buttons
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_():
+        if exec_and_free(color_dialog):
             self.default_arrow_fill_color = color_dialog.currentColor()
             self.update_default_arrow_color_button()
             # Save new setting immediately
@@ -6987,7 +6989,7 @@ class SettingsDialog(QDialog):
         # Translate dialog buttons
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_():
+        if exec_and_free(color_dialog):
             self.default_strand_color = color_dialog.currentColor()
             self.update_default_strand_color_button()
             # Save new setting immediately
@@ -7070,7 +7072,7 @@ class SettingsDialog(QDialog):
         color_dialog.setCurrentColor(resolve_level_color(None, self.current_theme, self.default_level_color))
         color_dialog.setOption(QColorDialog.DontUseNativeDialog)
         self.translate_color_dialog(color_dialog, _)
-        if color_dialog.exec_():
+        if exec_and_free(color_dialog):
             color = color_dialog.currentColor()
             if color.isValid():
                 self.set_default_level_color(color)
@@ -7092,7 +7094,7 @@ class SettingsDialog(QDialog):
         # Translate dialog buttons
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_():
+        if exec_and_free(color_dialog):
             self.default_stroke_color = color_dialog.currentColor()
             self.update_default_stroke_color_button()
             # Save new setting immediately
@@ -7122,7 +7124,7 @@ class SettingsDialog(QDialog):
         # Translate dialog buttons
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_():
+        if exec_and_free(color_dialog):
             self.highlight_color = color_dialog.currentColor()
             self.update_highlight_color_button()
             # Save new setting immediately
@@ -7196,7 +7198,7 @@ class SettingsDialog(QDialog):
     def open_default_width_dialog(self):
         """Open a dialog to configure default strand width."""
         dialog = DefaultWidthConfigDialog(self, self.parent())
-        if dialog.exec_() == QDialog.Accepted:
+        if exec_and_free(dialog) == QDialog.Accepted:
             # Get the new values
             new_width, new_stroke_width = dialog.get_values()
             self.default_strand_width = new_width

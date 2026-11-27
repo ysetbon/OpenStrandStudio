@@ -11,6 +11,7 @@ import os  # Add os for icon path resolution
 import sys  # Add sys for platform detection
 import math  # Add math for angle calculations
 import sound_manager
+from dialog_lifetime import call_later, exec_and_free, free_on_close
 
 # Cache for the lock-mode padlock icons (loaded once per state)
 _lock_icon_pixmaps = {}
@@ -2869,9 +2870,10 @@ class NumberedLayerButton(QPushButton):
                     print(f"DEBUG NLB delayed_alpha_fix: Set QGroupBox title to '{translations_dict.get('alpha_channel', 'Alpha channel')}'")
 
         # Schedule multiple passes to be extra safe across styles
-        QTimer.singleShot(0, delayed_alpha_fix)
-        QTimer.singleShot(50, delayed_alpha_fix)
-        QTimer.singleShot(150, delayed_alpha_fix)
+        # Tied to the dialog: one closed within the delay is already freed
+        call_later(dialog, 0, delayed_alpha_fix)
+        call_later(dialog, 50, delayed_alpha_fix)
+        call_later(dialog, 150, delayed_alpha_fix)
 
     def _apply_rtl_to_widgets(self, parent_widget, is_rtl):
         """Recursively apply RTL layout to child widgets."""
@@ -2934,7 +2936,7 @@ class NumberedLayerButton(QPushButton):
         # Translate dialog buttons
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_() == QColorDialog.Accepted:
+        if exec_and_free(color_dialog) == QColorDialog.Accepted:
             color = color_dialog.currentColor()
             if color.isValid():
                 self.set_color(color)
@@ -2962,7 +2964,7 @@ class NumberedLayerButton(QPushButton):
                     detail='before opening the shadow editor')
 
             # Create and show the shadow editor dialog
-            dialog = ShadowEditorDialog(layer_panel.canvas, strand, parent=layer_panel)
+            dialog = free_on_close(ShadowEditorDialog(layer_panel.canvas, strand, parent=layer_panel))
             dialog.show()
 
         except Exception as e:
@@ -3423,7 +3425,7 @@ class NumberedLayerButton(QPushButton):
         # Translate dialog buttons
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_() == QColorDialog.Accepted:
+        if exec_and_free(color_dialog) == QColorDialog.Accepted:
             color = color_dialog.currentColor()
             if color.isValid():
                 set_prefix = None
@@ -3483,7 +3485,7 @@ class NumberedLayerButton(QPushButton):
         color_dialog.setCurrentColor(current_color)
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_() == QColorDialog.Accepted:
+        if exec_and_free(color_dialog) == QColorDialog.Accepted:
             color = color_dialog.currentColor()
             if color.isValid():
                 self._apply_stroke_color(strand, color)
@@ -3521,7 +3523,7 @@ class NumberedLayerButton(QPushButton):
         color_dialog.setCurrentColor(strand.color)
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_() == QColorDialog.Accepted:
+        if exec_and_free(color_dialog) == QColorDialog.Accepted:
             color = color_dialog.currentColor()
             if color.isValid():
                 strand.set_color(color)
@@ -3826,7 +3828,7 @@ class NumberedLayerButton(QPushButton):
     def change_width(self, strand, layer_panel):
         """Open a width configuration dialog to change strand width."""
         dialog = WidthConfigDialog(strand, layer_panel, self)
-        if dialog.exec_() == QDialog.Accepted:
+        if exec_and_free(dialog) == QDialog.Accepted:
             new_width, new_stroke_width = dialog.get_values()
             
             # Apply changes to the strand
@@ -3899,7 +3901,7 @@ class NumberedLayerButton(QPushButton):
         strands that use it as a component so their geometry recalculates.
         """
         dialog = WidthConfigDialog(strand, layer_panel, self, show_elliptical=True)
-        if dialog.exec_() == QDialog.Accepted:
+        if exec_and_free(dialog) == QDialog.Accepted:
             new_width, new_stroke_width = dialog.get_values()
 
             # Apply changes to this strand only
@@ -3942,7 +3944,7 @@ class NumberedLayerButton(QPushButton):
         """
         from end_style_dialog import EndStyleDialog
         dialog = EndStyleDialog(strand, side, layer_panel, self)
-        dialog.exec_()
+        exec_and_free(dialog)
         self._refresh_dependent_masks(strand, layer_panel)
         if layer_panel and hasattr(layer_panel, 'canvas'):
             layer_panel.canvas.update()
@@ -4010,7 +4012,7 @@ class NumberedLayerButton(QPushButton):
         # Translate dialog buttons
         self.translate_color_dialog(color_dialog, _)
 
-        if color_dialog.exec_() == QColorDialog.Accepted:
+        if exec_and_free(color_dialog) == QColorDialog.Accepted:
             color = color_dialog.currentColor()
             if color.isValid():
                 strand.arrow_color = color

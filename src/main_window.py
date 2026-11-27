@@ -31,6 +31,7 @@ from group_layers import GroupLayerManager, StrandAngleEditDialog
 from settings_dialog import SettingsDialog
 import sound_manager
 from translations import translations
+from dialog_lifetime import exec_and_free
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,
                              QSplitter, QFileDialog, QSpacerItem, QSizePolicy)
 from PyQt5.QtCore import Qt, QSize
@@ -2091,7 +2092,7 @@ class MainWindow(QMainWindow):
                 box.setEscapeButton(cancel_btn)
                 if self.language_code == 'he':
                     box.setLayoutDirection(Qt.RightToLeft)
-                box.exec_()
+                exec_and_free(box)
                 clicked = box.clickedButton()
                 if clicked is save_btn:
                     # Abort the load if the save was canceled/failed, otherwise
@@ -2341,8 +2342,10 @@ class MainWindow(QMainWindow):
             dialog.setWindowFlags(dialog.windowFlags() | Qt.WindowMaximizeButtonHint | Qt.WindowMinimizeButtonHint)
 
             dialog.finished.connect(self.on_layer_state_dialog_closed)
-            pass
-            dialog.exec_()
+            exec_and_free(dialog)
+            # The X skips finished (closeEvent is replaced above), and the
+            # dialog is being freed: never keep a reference to it.
+            self._layer_state_dialog = None
         else:
             # If dialog exists and is visible, just bring it to front
             self._layer_state_dialog.raise_()
@@ -2410,7 +2413,7 @@ class MainWindow(QMainWindow):
         close_button.clicked.connect(info_dialog.accept)
         layout.addWidget(close_button)
 
-        info_dialog.exec_()
+        exec_and_free(info_dialog)
 
 
     def update_strand_attachable(self, set_number, attachable):
@@ -3461,7 +3464,7 @@ class MainWindow(QMainWindow):
             button_box = box.findChild(QDialogButtonBox)
             if button_box is not None:
                 button_box.setCenterButtons(True)
-        box.exec_()
+        exec_and_free(box)
         return box.clickedButton() is quit_btn
 
     def _save_tab_edge_position(self):

@@ -51,6 +51,7 @@ from strand_data_menu import StrandDataClipboardMixin
 import os # Import os for path manipulation
 import sys # Import sys for platform check
 import sound_manager
+from dialog_lifetime import exec_and_free
 
 
 
@@ -3914,7 +3915,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         yes_button = msg_box.addButton(_['yes'], QMessageBox.YesRole)
         no_button = msg_box.addButton(_['no'], QMessageBox.NoRole)
         msg_box.setDefaultButton(no_button)
-        msg_box.exec_()
+        exec_and_free(msg_box)
         return msg_box.clickedButton() == yes_button
 
     def request_delete_all_masks(self):
@@ -4443,7 +4444,7 @@ class LayerPanel(StrandDataClipboardMixin, QWidget):
         yes_button = msg_box.addButton(_['yes'], QMessageBox.YesRole)
         no_button = msg_box.addButton(_['no'], QMessageBox.NoRole)
         msg_box.setDefaultButton(no_button)
-        msg_box.exec_()
+        exec_and_free(msg_box)
 
         if msg_box.clickedButton() == yes_button:
             # Save state for undo before deleting

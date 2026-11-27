@@ -1297,8 +1297,24 @@ class ShadowEditorDialog(QDialog):
         btn.setProperty('off_text', off_text)
         btn.setText(off_text if btn.isChecked() else on_text)
 
+    def done(self, result):
+        """Every way of closing ends here: the X and Close through the close
+        event, Esc straight from reject(). Esc used to skip the close event,
+        leaving the shadow outlines on the canvas and the edits out of the
+        undo history."""
+        self._finish_editing()
+        super().done(result)
+
     def closeEvent(self, event):
         """Handle dialog close - clean up visualizations."""
+        self._finish_editing()
+        super().closeEvent(event)
+
+    def _finish_editing(self):
+        """Clear the visualizations and record the undo step, once."""
+        if getattr(self, '_editing_finished', False):
+            return
+        self._editing_finished = True
         for item in self.shadow_items:
             if hasattr(self.canvas, 'remove_visible_shadow_path'):
                 caster = item.casting_layer_name or self.casting_layer
@@ -1319,5 +1335,3 @@ class ShadowEditorDialog(QDialog):
             self.canvas.undo_redo_manager.save_state(
                 action='strand.shadow', source='dialog',
                 targets=[getattr(self.strand, 'layer_name', None)])
-
-        super().closeEvent(event)

@@ -26,6 +26,7 @@ import agent_settings
 from agent_bridge import AppBridge
 from agent_panel import AgentButton, AgentPanel
 from project_settings import capture_project_settings, read_project_settings, apply_project_settings
+from tab_session_file import is_session_file, write_json
 from mask_mode import MaskMode
 from group_layers import GroupLayerManager, StrandAngleEditDialog
 from settings_dialog import SettingsDialog
@@ -678,6 +679,14 @@ class MainWindow(QMainWindow):
                 shortcut.activated.connect(handler)
                 self.tab_shortcuts.append(shortcut)
 
+        # Ctrl+S / Ctrl+O (Cmd on macOS) do what the Save and Load buttons do,
+        # and nothing while those buttons are disabled (e.g. editing a mask).
+        for key, button in (("Ctrl+S", self.save_button), ("Ctrl+O", self.load_button)):
+            shortcut = QShortcut(QKeySequence(key), self)
+            shortcut.setContext(Qt.WindowShortcut)
+            shortcut.activated.connect(lambda button=button: button.isEnabled() and button.click())
+            self.tab_shortcuts.append(shortcut)
+
     def _tab_shortcut(self, action, step, cue):
         """Run a tab shortcut; play its sound only when something changed."""
         if action(step):
@@ -956,7 +965,7 @@ class MainWindow(QMainWindow):
         self.rotate_button.clicked.connect(self.set_rotate_mode)
         self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
         self.angle_adjust_button.clicked.connect(self.handle_angle_adjust_click)
-        self.save_button.clicked.connect(self.save_project)
+        self.save_button.clicked.connect(self.save_tabs)
         self.load_button.clicked.connect(self.load_project)
         self.save_image_button.clicked.connect(self.save_canvas_as_image)
         self.select_strand_button.clicked.connect(self.set_select_mode)
@@ -2012,7 +2021,7 @@ class MainWindow(QMainWindow):
         self.rotate_button.clicked.connect(self.set_rotate_mode)
         self.toggle_grid_button.clicked.connect(self.canvas.toggle_grid)
         self.angle_adjust_button.clicked.connect(self.handle_angle_adjust_click)
-        self.save_button.clicked.connect(self.save_project)
+        self.save_button.clicked.connect(self.save_tabs)
         self.load_button.clicked.connect(self.load_project)
         self.save_image_button.clicked.connect(self.save_canvas_as_image)
         self.select_strand_button.clicked.connect(self.set_select_mode)
@@ -2105,17 +2114,25 @@ class MainWindow(QMainWindow):
         filename, _ = QFileDialog.getOpenFileName(self, "Open Project", "", "JSON Files (*.json)")
         if not filename:
             return
-        self.load_project_file(filename)
+        # The question above was about the active tab: a session file is not
+        # asked about that tab a second time.
+        self.load_project_file(filename, asked_about_active=True)
 
-    def load_project_file(self, filename):
+    def load_project_file(self, filename, asked_about_active=False):
         """Load a project or history file into the active tab: canvas, layer
         panel, groups, masks, shadows, locks and a fresh undo baseline. Shared
-        by Load and by the agent panel, which opens its designs this way."""
+        by Load and by the agent panel, which opens its designs this way.
+
+        A session file (several tabs saved together, see tab_session_file.py)
+        replaces every open tab instead."""
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 file_data = json.load(f)
         except Exception:
             file_data = None
+
+        if is_session_file(file_data) and hasattr(self, 'tab_manager'):
+            return self.load_session(file_data, filename, asked_about_active)
 
         # Switch to the drawing settings saved with the project before its strands
         # are built, so curves and shadows come out as they were saved. Older
@@ -3165,6 +3182,117 @@ class MainWindow(QMainWindow):
     def update_locked_layers(self, locked_layers, lock_mode_active):
         self.canvas.move_mode.set_locked_layers(locked_layers, lock_mode_active)
 
+
+    def load_session(self, data, filename=None, asked_about_active=False):
+        """Open a session file: its tabs take the place of the open ones.
+
+        Tabs with unsaved changes are named first, and the user can back out.
+        ``asked_about_active`` skips the active tab in that question, for Load,
+        which has just asked about it. Returns True when the tabs were opened."""
+        tm = self.tab_manager
+        _ = translations[self.language_code]
+        unsaved = [t for t in tm.tabs if t.dirty
+                   and not (asked_about_active and t.id == tm.active_tab_id)]
+        if unsaved:
+            box = QMessageBox(self)
+            box.setIcon(QMessageBox.Warning)
+            box.setWindowTitle(_['unsaved_tab_title'])
+            box.setTextFormat(Qt.PlainText)
+            box.setText("%s\n\n%s" % (
+                _['session_unsaved_tabs'],
+                "\n".join("\u2022 " + tm.title_for(t) for t in unsaved)))
+            open_btn = box.addButton(_['open_anyway'], QMessageBox.DestructiveRole)
+            cancel_btn = box.addButton(_['cancel'], QMessageBox.RejectRole)
+            box.setDefaultButton(cancel_btn)
+            box.setEscapeButton(cancel_btn)
+            if self.language_code == 'he':
+                box.setLayoutDirection(Qt.RightToLeft)
+            try:
+                box.exec_()
+                go_on = box.clickedButton() is open_btn
+            finally:
+                box.deleteLater()
+            if not go_on:
+                return False
+
+        if not tm.replace_with_session(data):
+            return False
+        if filename:
+            self._session_path = filename
+        # Several tabs came in: show the tab bar, or only one of them is visible
+        if len(tm.tabs) > 1 and hasattr(self, 'tab_edge') and not self.tab_edge.isVisible():
+            self.tab_edge.show_edge()
+            self.tabs_button.setChecked(True)
+        return True
+
+    def save_tabs(self):
+        """What the Save button and Ctrl+S do. With one tab open, save it as
+        before. With several, ask which tabs to save (all ticked to begin
+        with) and write them into one session file; Load brings them back
+        together. One ticked tab is saved as an ordinary single-tab project.
+
+        Returns True only when a file was written."""
+        tm = getattr(self, 'tab_manager', None)
+        if tm is None or len(tm.tabs) < 2:
+            return self.save_project()
+        # Every tab is written from its snapshot in memory: bring the active
+        # tab's up to date (this also ends a mask edit in progress).
+        if not tm.capture_for_save():
+            return False
+
+        from save_tabs_dialog import ask_which_tabs
+        tabs = [{'id': t.id, 'title': tm.title_for(t), 'layers': tm.tab_layer_count(t.id),
+                 'dirty': t.dirty, 'active': t.id == tm.active_tab_id} for t in tm.tabs]
+        chosen = ask_which_tabs(tabs, self.language_code, self.current_theme, self)
+        if not chosen:
+            return False
+        if len(chosen) == 1:
+            return self.export_tab(chosen[0])
+
+        _ = translations[self.language_code]
+        filename = self._ask_json_filename(_['save_tabs_title'], getattr(self, '_session_path', '') or '')
+        if not filename:
+            return False
+        if not write_json(filename, tm.session_file_data(chosen)):
+            QMessageBox.warning(self, _['save_tabs_title'], _['save_failed'])
+            return False
+        self._session_path = filename
+        tm.mark_tabs_saved(chosen)
+        sound_manager.play('save_done')
+        return True
+
+    def export_tab(self, tab_id):
+        """Save one tab on its own, as an ordinary single-tab project file
+        (the tab's export icon and "Export tab..." in its right-click menu).
+        A tab in the background is written from its snapshot in memory, with
+        no need to switch to it. Returns True only when a file was written."""
+        tm = getattr(self, 'tab_manager', None)
+        if tm is None or tab_id == tm.active_tab_id:
+            return self.save_project()
+        session = tm.find(tab_id)
+        if session is None:
+            return False
+        data = tm.tab_file_data(tab_id)
+        if data is None:
+            # Nothing was ever captured for it: save it the way Save does
+            if not tm.switch_to_tab(tab_id):
+                return False
+            return self.save_project()
+        _ = translations[self.language_code]
+        filename = self._ask_json_filename(_['export_tab'], tm.title_for(session))
+        if not filename:
+            return False
+        if not write_json(filename, data):
+            QMessageBox.warning(self, _['export_tab'], _['save_failed'])
+            return False
+        tm.mark_tab_saved(tab_id, filename)
+        sound_manager.play('save_done')
+        return True
+
+    def _ask_json_filename(self, title, suggestion=''):
+        """Ask where to save a .json file; '' when the dialog was cancelled."""
+        filename, _selected = QFileDialog.getSaveFileName(self, title, suggestion, "JSON Files (*.json)")
+        return filename
 
     def save_project(self):
         """Save the active project. Returns True only when a file was actually

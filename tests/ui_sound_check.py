@@ -1412,14 +1412,37 @@ def check_tab_bar_drag(edge, rec):
 
 
 def check_save(w, rec):
+    """With one tab open, Save writes the project at once. With several it first
+    asks which tabs to save (the Save tabs dialog, every tab ticked): pressing
+    that dialog's Save button writes them together."""
     target = os.path.join(SETTINGS_DIR, "sound_check_project.json")
     original = QFileDialog.getSaveFileName
     QFileDialog.getSaveFileName = staticmethod(lambda *a, **k: (target, "JSON Files (*.json)"))
+    several = len(w.tab_manager.tabs) > 1
+
+    def press_save_in_the_dialog():
+        dialog = QApplication.activeModalWidget()
+        if dialog is not None and hasattr(dialog, 'save_button'):
+            click(dialog.save_button)
+
+    WATCHER.timer.stop()  # this check answers the Save tabs dialog itself
     try:
-        run_check(rec, "Saving", "Save button", "click and save", lambda: click(w.save_button), {"ui_click", "save_done"})
+        if several:
+            QTimer.singleShot(150, press_save_in_the_dialog)
+            run_check(rec, "Saving", "Save button", "click, keep every tab ticked and save",
+                      lambda: click(w.save_button), {"ui_click", "dialog_open", "dialog_close", "save_done"})
+        else:
+            run_check(rec, "Saving", "Save button", "click and save", lambda: click(w.save_button),
+                      {"ui_click", "save_done"})
     finally:
         QFileDialog.getSaveFileName = original
+        WATCHER.timer.start(40)
     record("Saving", "Save button", "file written", "exists", os.path.exists(target), os.path.exists(target))
+    if several and os.path.exists(target):
+        with open(target, encoding="utf-8") as saved:
+            tabs = len(json.load(saved).get("tabs", []))
+        record("Saving", "Save button", "every tab is in the file", len(w.tab_manager.tabs), tabs,
+               tabs == len(w.tab_manager.tabs))
 
 
 def check_settings_behaviour(w, rec):

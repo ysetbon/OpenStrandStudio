@@ -87,16 +87,18 @@ def snap_target_style(theme_name, active=False):
 
 
 class IconButton(QWidget):
-    """Small painted icon button (duplicate / close / plus / more). Themed pen color."""
+    """Small painted icon button (export / duplicate / close / plus / more). Themed pen color."""
 
     clicked = pyqtSignal()
 
-    # 'more' opens a menu, and the menu plays its own opening sound.
-    CUES = {'plus': 'tab_new', 'duplicate': 'tab_duplicate', 'close': 'tab_close', 'more': 'none'}
+    # 'more' opens a menu, and the menu plays its own opening sound; 'export'
+    # opens the save dialog, and a file that gets written plays save_done.
+    CUES = {'plus': 'tab_new', 'duplicate': 'tab_duplicate', 'close': 'tab_close', 'more': 'none',
+            'export': 'none'}
 
     def __init__(self, kind, parent=None):
         super().__init__(parent)
-        self.kind = kind  # 'duplicate' | 'close' | 'plus' | 'more'
+        self.kind = kind  # 'export' | 'duplicate' | 'close' | 'plus' | 'more'
         sound_manager.set_cue(self, self.CUES[kind])
         sound_manager.set_hover_cue(self, 'hover_tab_button')
         self._hover = False
@@ -176,6 +178,28 @@ class IconButton(QWidget):
             path.lineTo(cx + 4.5, cy - 2.0)
             p.setBrush(Qt.NoBrush)
             p.drawPath(path)
+        elif self.kind == 'export':
+            # A tray with an arrow leaving it upwards: "send this tab out".
+            # Not a disk, so it is not read as the main Save.
+            left, right = r.left() + m - 1.0, r.right() - m + 2.0
+            bottom = r.bottom() - m + 2.0
+            cx = (left + right) / 2.0
+            tray_top = bottom - 4.0
+            arrow_top = r.top() + m - 2.0
+            p.setBrush(Qt.NoBrush)
+            tray = QPainterPath()
+            tray.moveTo(left, tray_top)
+            tray.lineTo(left, bottom)
+            tray.lineTo(right, bottom)
+            tray.lineTo(right, tray_top)
+            p.drawPath(tray)
+            arrow = QPainterPath()
+            arrow.moveTo(cx, bottom - 3.5)
+            arrow.lineTo(cx, arrow_top)
+            arrow.moveTo(cx - 3.0, arrow_top + 3.0)
+            arrow.lineTo(cx, arrow_top)
+            arrow.lineTo(cx + 3.0, arrow_top + 3.0)
+            p.drawPath(arrow)
         elif self.kind == 'duplicate':
             # Two overlapping squares.
             w = r.width()
@@ -215,7 +239,7 @@ TAB_CHIP_VERTICAL_MARGIN = 3
 TAB_EDGE_SIDE_MARGIN = 12      # px after the + button (before it in RTL)
 TAB_SPACING = 8                # px between tabs and buttons
 TAB_MIN_WIDTH = 132            # a background tab never gets narrower than this
-TAB_MIN_WIDTH_ACTIVE = 160     # the active tab also holds the duplicate icon
+TAB_MIN_WIDTH_ACTIVE = 185     # the active tab also holds the export and duplicate icons
 TAB_MAX_WIDTH = 240            # one very long title cannot take the whole edge
 TAB_SCROLLBAR_HEIGHT = 10      # the layer panel's scrollbar thickness
 TAB_SCROLLBAR_GAP = 3          # px between the tabs and the scrollbar
@@ -298,7 +322,8 @@ def tab_menu_qss(theme_name):
 
 
 class TabChip(QWidget):
-    """A single tab: title (+ dirty dot), duplicate icon (active tab only), close X.
+    """A single tab: title (+ dirty dot), export and duplicate icons (active tab
+    only), close X.
 
     The chip's width is set by the edge (set_chip_width); the title is cut to fit
     with "..." and only then gets a tooltip with the whole title. A left press that
@@ -307,6 +332,7 @@ class TabChip(QWidget):
     """
 
     switch_requested = pyqtSignal(str)
+    export_requested = pyqtSignal(str)
     duplicate_requested = pyqtSignal(str)
     close_requested = pyqtSignal(str)
     context_requested = pyqtSignal(str, QPoint)
@@ -362,10 +388,17 @@ class TabChip(QWidget):
         sound_manager.set_cue(self, 'tab_switch')
         sound_manager.set_hover_cue(self, 'hover_tab')
 
-        # Duplicate only on the active tab (and in the right-click menu): it keeps
-        # background tabs narrow.
+        # Export and duplicate only on the active tab (and in the right-click
+        # menu): it keeps background tabs narrow.
+        self.export_btn = None
         self.dup_btn = None
         if active:
+            self.export_btn = IconButton('export', self)
+            self.export_btn.set_color(text_color)
+            # The one icon here whose meaning is not obvious from its shape
+            if edge is not None:
+                self.export_btn.setToolTip(edge._tr('export_tab', 'Export tab'))
+            self.export_btn.clicked.connect(lambda: self.export_requested.emit(self.tab_id))
             self.dup_btn = IconButton('duplicate', self)
             self.dup_btn.set_color(text_color)
             self.dup_btn.clicked.connect(lambda: self.duplicate_requested.emit(self.tab_id))
@@ -375,12 +408,14 @@ class TabChip(QWidget):
         self.close_btn.set_dim(not active)
         self.close_btn.clicked.connect(lambda: self.close_requested.emit(self.tab_id))
 
-        # LTR: [dot] text, then icons (duplicate, close) on the right.
+        # LTR: [dot] text, then icons (export, duplicate, close) on the right.
         # RTL (Hebrew): icons on the left, then text [dot] on the right.
         if rtl:
             layout.addWidget(self.close_btn)
             if self.dup_btn is not None:
                 layout.addWidget(self.dup_btn)
+            if self.export_btn is not None:
+                layout.addWidget(self.export_btn)
             layout.addWidget(self.label, 1)
             if self.dirty_dot is not None:
                 layout.addWidget(self.dirty_dot)
@@ -388,6 +423,8 @@ class TabChip(QWidget):
             if self.dirty_dot is not None:
                 layout.addWidget(self.dirty_dot)
             layout.addWidget(self.label, 1)
+            if self.export_btn is not None:
+                layout.addWidget(self.export_btn)
             if self.dup_btn is not None:
                 layout.addWidget(self.dup_btn)
             layout.addWidget(self.close_btn)
@@ -404,7 +441,7 @@ class TabChip(QWidget):
         m = layout.contentsMargins()
         sp = layout.spacing()
         w = m.left() + m.right() + self._title_metrics().horizontalAdvance(self.full_title)
-        for part in (self.dirty_dot, self.dup_btn, self.close_btn):
+        for part in (self.dirty_dot, self.export_btn, self.dup_btn, self.close_btn):
             if part is not None:
                 w += part.width() + sp
         return int(round(w * TAB_WIDTH_SCALE))
@@ -713,6 +750,7 @@ class DraggableTabEdge(QWidget):
             chip = TabChip(session, title, active, self.theme_name, self._viewport,
                            rtl=self._rtl, edge=self)
             chip.switch_requested.connect(self.tab_manager.switch_to_tab)
+            chip.export_requested.connect(self._export_tab)
             chip.duplicate_requested.connect(self.tab_manager.duplicate_tab)
             chip.close_requested.connect(self.tab_manager.close_tab)
             chip.context_requested.connect(self._show_tab_menu)
@@ -998,6 +1036,7 @@ class DraggableTabEdge(QWidget):
         index = tm.tabs.index(session)
         count = len(tm.tabs)
         menu = self._new_menu()
+        export = menu.addAction(self._tr('export_tab', 'Export tab') + '\u2026')
         dup = menu.addAction(self._tr('duplicate_tab', 'Duplicate tab'))
         menu.addSeparator()
         close = menu.addAction(self._tr('close_tab', 'Close tab'))
@@ -1014,7 +1053,9 @@ class DraggableTabEdge(QWidget):
         menu.deleteLater()
         if chosen is None:
             return
-        if chosen is dup:
+        if chosen is export:
+            self._export_tab(tab_id)
+        elif chosen is dup:
             tm.duplicate_tab(tab_id)
         elif chosen is close:
             tm.close_tab(tab_id)
@@ -1028,6 +1069,17 @@ class DraggableTabEdge(QWidget):
         elif chosen is to_end:
             self._reveal_next = tab_id
             tm.move_tab(tab_id, count - 1)
+
+    def _export_tab(self, tab_id):
+        """Save this one tab on its own (the main window owns the file dialog).
+
+        Deferred to the event loop: the click comes from an icon on a chip, and
+        the file dialog would otherwise run inside that icon's mouse handler,
+        with the chip free to be rebuilt (deleted) under it once the tab is
+        saved and renamed."""
+        main_window = getattr(self.tab_manager, 'main_window', None)
+        if main_window is not None and hasattr(main_window, 'export_tab'):
+            QTimer.singleShot(0, lambda: main_window.export_tab(tab_id))
 
     def _show_all_tabs_menu(self):
         """Every tab, ticked on the active one; pick one to switch to it. A

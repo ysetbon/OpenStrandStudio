@@ -16,6 +16,8 @@ from PyQt5.QtWidgets import QMessageBox
 
 from save_load_manager import serialize_project_state, apply_project_state
 from project_settings import capture_project_settings, apply_project_settings
+from tab_session_file import (build_session, layer_count, split_project_data,
+                              tab_project_data)
 from translations import translations
 
 
@@ -546,13 +548,100 @@ class TabManager(QObject):
             self.changed.emit()
 
     def mark_active_saved(self, file_path=None):
-        active = self.get_active()
-        if active is not None:
-            active.dirty = False
+        self.mark_tab_saved(self.active_tab_id, file_path)
+
+    def mark_tab_saved(self, tab_id, file_path=None):
+        """The tab now matches a file on disk: clean, and named after it."""
+        session = self.find(tab_id)
+        if session is not None:
+            session.dirty = False
             if file_path:
-                active.file_path = file_path
+                session.file_path = file_path
                 # Use the file name (without extension) as the tab title; it is no
                 # longer an auto-translated "Untitled N" tab.
-                active.title = os.path.splitext(os.path.basename(file_path))[0]
-                active.untitled_index = None
+                session.title = os.path.splitext(os.path.basename(file_path))[0]
+                session.untitled_index = None
             self.changed.emit()
+
+    def mark_tabs_saved(self, tab_ids):
+        """These tabs were written into a session file: clean, names kept."""
+        changed = False
+        for tab_id in tab_ids:
+            session = self.find(tab_id)
+            if session is not None and session.dirty:
+                session.dirty = False
+                changed = True
+        if changed:
+            self.changed.emit()
+
+    # ------------------------------------------------- saving several tabs
+    def capture_for_save(self):
+        """Bring the active tab's in-memory snapshot up to date, so every tab
+        can be written from memory. False (after a warning) when that failed."""
+        return self._capture_or_warn()
+
+    def tab_file_data(self, tab_id):
+        """What Save writes for this tab alone, from its snapshot in memory
+        (call capture_for_save first when the tab is the active one). None
+        for an unknown tab or one with nothing captured."""
+        session = self.find(tab_id)
+        if session is None:
+            return None
+        return tab_project_data(session.history_payload, session.project_state,
+                                session.project_settings)
+
+    def tab_layer_count(self, tab_id):
+        """How many layers the tab holds, or None when that is not known."""
+        session = self.find(tab_id)
+        if session is None:
+            return None
+        if tab_id == self.active_tab_id:
+            return len(getattr(self.canvas, 'strands', []) or [])
+        return layer_count(session.history_payload, session.project_state)
+
+    def session_file_data(self, tab_ids):
+        """One session file holding these tabs, in tab-bar order whatever the
+        order of ``tab_ids``. The active tab stays the active one when it is
+        among them."""
+        wanted = set(tab_ids)
+        chosen = [t for t in self.tabs if t.id in wanted]
+        active_index = 0
+        for index, session in enumerate(chosen):
+            if session.id == self.active_tab_id:
+                active_index = index
+        return build_session(
+            [(self.title_for(t), self.tab_file_data(t.id)) for t in chosen],
+            active_index)
+
+    def replace_with_session(self, data):
+        """Close the open tabs and open the ones in a session file (the parsed
+        JSON), showing the tab that was active when it was saved. Returns False,
+        changing nothing, when the file holds no tab.
+
+        The caller asks about unsaved changes first: nothing is asked here."""
+        entries = [e for e in data.get("tabs", []) if isinstance(e, dict)]
+        if not entries:
+            return False
+        sessions = []
+        for entry in entries:
+            title = entry.get("title")
+            title = title.strip() if isinstance(title, str) else ""
+            if title:
+                session = TabSession(id=self._new_id(), title=title)
+            else:
+                session = self._make_untitled_session()
+            (session.history_payload, session.project_state,
+             session.project_settings) = split_project_data(entry.get("project"))
+            sessions.append(session)
+        try:
+            index = int(data.get("active_index", 0))
+        except (TypeError, ValueError):
+            index = 0
+        index = max(0, min(index, len(sessions) - 1))
+
+        self._finish_mask_edit()
+        self.tabs = sessions
+        self.active_tab_id = sessions[index].id
+        self.restore_session(self.active_tab_id)
+        self.changed.emit()
+        return True

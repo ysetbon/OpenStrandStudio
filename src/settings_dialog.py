@@ -3442,6 +3442,8 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['shortcut_escape_desc'].split(' - ')[0]}</span> - {_['shortcut_escape_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_undo_desc'].split(' - ')[0]}</span> - {_['shortcut_undo_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_redo_desc'].split(' - ')[0]}</span> - {_['shortcut_redo_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">Ctrl+S</span> - {_['save']}</li>
+            <li><span class="button-name">Ctrl+O</span> - {_['load']}</li>
             <li><span class="button-name">{_['shortcut_new_strand_desc'].split(' - ')[0]}</span> - {_['shortcut_new_strand_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_draw_names_desc'].split(' - ')[0]}</span> - {_['shortcut_draw_names_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_lock_layers_desc'].split(' - ')[0]}</span> - {_['shortcut_lock_layers_desc'].split(' - ')[1]}</li>
@@ -4540,6 +4542,8 @@ class SettingsDialog(QDialog):
             <li><span class="button-name">{_['shortcut_escape_desc'].split(' - ')[0]}</span> - {_['shortcut_escape_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_undo_desc'].split(' - ')[0]}</span> - {_['shortcut_undo_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_redo_desc'].split(' - ')[0]}</span> - {_['shortcut_redo_desc'].split(' - ')[1]}</li>
+            <li><span class="button-name">Ctrl+S</span> - {_['save']}</li>
+            <li><span class="button-name">Ctrl+O</span> - {_['load']}</li>
             <li><span class="button-name">{_['shortcut_new_strand_desc'].split(' - ')[0]}</span> - {_['shortcut_new_strand_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_draw_names_desc'].split(' - ')[0]}</span> - {_['shortcut_draw_names_desc'].split(' - ')[1]}</li>
             <li><span class="button-name">{_['shortcut_lock_layers_desc'].split(' - ')[0]}</span> - {_['shortcut_lock_layers_desc'].split(' - ')[1]}</li>
@@ -5352,6 +5356,8 @@ class SettingsDialog(QDialog):
                 <li><span class="button-name">{_['shortcut_escape_desc'].split(' - ')[0]}</span> - {_['shortcut_escape_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shortcut_undo_desc'].split(' - ')[0]}</span> - {_['shortcut_undo_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shortcut_redo_desc'].split(' - ')[0]}</span> - {_['shortcut_redo_desc'].split(' - ')[1]}</li>
+                <li><span class="button-name">Ctrl+S</span> - {_['save']}</li>
+                <li><span class="button-name">Ctrl+O</span> - {_['load']}</li>
                 <li><span class="button-name">{_['shortcut_new_strand_desc'].split(' - ')[0]}</span> - {_['shortcut_new_strand_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shortcut_draw_names_desc'].split(' - ')[0]}</span> - {_['shortcut_draw_names_desc'].split(' - ')[1]}</li>
                 <li><span class="button-name">{_['shortcut_lock_layers_desc'].split(' - ')[0]}</span> - {_['shortcut_lock_layers_desc'].split(' - ')[1]}</li>
